@@ -1,0 +1,137 @@
+/***************************** pageTextStyle *****************************/
+h5 {
+    color: #fff;
+}
+
+.card-overlay {
+    position: relative;
+    height: 250px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.card-overlay img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.75),
+        rgba(0, 0, 0, 0.15)
+    );
+}
+
+.card-overlay-content {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.card-overlay-content h5 {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.card-overlay-content p {
+    font-size: 0.85rem;
+    margin-bottom: 5px;
+}
+
+.card-overlay-content a {
+    color: #4fd1c5;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.card-overlay-content a:hover {
+    text-decoration: underline;
+}
+
+.services-title {
+    /* text-align: center; */
+    line-height: 1.2;
+    position: relative;
+    z-index: 2;
+}
+
+.outlined-text {
+    display: inline-flex;
+    width: auto;
+    /* height: auto; */
+    vertical-align: middle;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0;
+}
+
+.outlined-text svg {
+    display: block;
+    overflow: visible;
+}
+
+.outlined-text text {
+    font-size: 50px;
+    font-weight: 900;
+    fill: #e53935;
+    stroke: white;
+    stroke-width: 10px;
+    paint-order: stroke fill;
+    dominant-baseline: hanging;
+}
+
+.word-fade-in {
+    margin: 0;
+    padding: 0;
+    display: block;
+    /* Ensures it takes up the full width */
+}
+
+.animated-word {
+    display: inline-block;
+    position: relative;
+    margin-right: 0.2em;
+    /* Adjust space between words */
+    opacity: 0;
+    transform: translateY(20px);
+    animation: wordFadeIn 0.5s ease-out forwards;
+}
+
+/* Layer 1: The thick background outline */
+.word-outline {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    color: white;
+    /* This creates the thick border without distorting the 'fill' */
+    -webkit-text-stroke: 12px white;
+    stroke-linejoin: round;
+    /* ROUNDS THE CORNERS TO REMOVE SPIKES */
+    white-space: nowrap;
+}
+
+/* Layer 2: The crisp red text on top */
+.word-fill {
+    position: relative;
+    z-index: 2;
+    color: #e53935;
+    white-space: nowrap;
+}
+
+@keyframes wordFadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
