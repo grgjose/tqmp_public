@@ -162,8 +162,8 @@ class UserController extends Controller
             ], 401);
         }
 
-        //$otp = $this->generateOtp();
-        $otp = '123456'; //For Development Only
+        $otp = $this->generateOtp();
+        //$otp = '123456'; //For Development Only
 
         $user = User::find($my_user->id);
         $msg = 'Please use this code to proceed with your verification. This code will expire in 5 minutes. Do not share it with anyone.';
@@ -176,11 +176,11 @@ class UserController extends Controller
 
         if ($user->otp1 == "" || $user->otp1 == null || $user->otp1 == "null" || $user->otp1 == 0) {
             $user->otp1 = $otp;
-            //$this->sendOtp($number, $msg, $otp);
+            $this->sendOtp($number, $msg, $otp);
             $slot = 'otp1';
         } elseif ($user->otp2 == "" || $user->otp2 == null || $user->otp2 == "null" || $user->otp2 == 0) {
             $user->otp2 = $otp;
-            //$this->sendOtp($number, $msg, $otp);
+            $this->sendOtp($number, $msg, $otp);
             $slot = 'otp2';
         } else {
             return response()->json([
@@ -194,9 +194,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'OTP generated successfully.',
-            'otp_slot' => $slot,
-            'otp' => $otp // ⚠️ remove this in production for security
+            'message' => 'OTP generated successfully.'
         ], 200);
     }
 
@@ -237,7 +235,6 @@ class UserController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Valid OTP.',
-                //'otp' => $otp // ⚠️ remove this in production for security
             ], 200);
         }
 
@@ -246,7 +243,6 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Try again later',
-                //'otp' => $otp // ⚠️ remove this in production for security
             ], 400);    
         }
         
@@ -256,7 +252,6 @@ class UserController extends Controller
         return response()->json([
             'success' => false,
             'message' => 'Invalid OTP',
-            //'otp' => $otp // ⚠️ remove this in production for security
         ], 400);
     }
 

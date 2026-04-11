@@ -84,8 +84,8 @@
                                     class="rounded-circle shadow"
                                     alt="User Image" />
                                 <p>
-                                    {{ $my_user->fname.' '.$my_user->lname }} - Web Developer
-                                    <small>Member since Nov. 2023</small>
+                                    {{ $my_user->fname.' '.$my_user->lname }}
+                                    <small>Member since {{ $my_user->created_at->format("M. Y") }} </small>
                                 </p>
                             </li>
                             <li class="user-footer">

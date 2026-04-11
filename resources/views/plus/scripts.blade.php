@@ -141,6 +141,7 @@
             });
         </script>
     @endif
+
     @if(isset($hostname))
         <script async defer
             src="https://maps.googleapis.com/maps/api/js?key={{ config('app.google_maps_api_key') }}&libraries=places&callback=initMap">
@@ -284,6 +285,7 @@
             });
         </script>
     @endif
+    
     <script>
         let currentImageIndex = 0;
         let allImages = [];
@@ -369,11 +371,13 @@
             }
         });
     </script>
+    
     <script>
         var scrollSpy = new bootstrap.ScrollSpy(document.body, {
             target: '#quotationScrollspy'
         });
     </script>
+    
     <script>
         var scrollSpy = new bootstrap.ScrollSpy(document.querySelector('.card-body'), {
             target: '#notes-nav'
@@ -389,6 +393,7 @@
             });
         });
     </script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('imageModal');
@@ -641,6 +646,7 @@
             });
         }
     </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('productSearch1');
@@ -690,87 +696,7 @@
             });
         });
     </script>
-    <script>
-        $(document).ready(function () {
 
-            let otpVerified = false;
-            // If URL is not /cart, skip OTP flow and allow normal checkout process
-            if (window.location.href === "/cart")  return;
-
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-
-            // Step 1: Click Checkout → Call OTP_Get + show modal
-            $('#checkoutButton').on('click', function (e) {
-                e.preventDefault();
-
-                $.ajax({
-                    url: '/checkout_otp_get', // your OTP_Get API
-                    method: 'POST',
-                    success: function (res) {
-                        if(res.success == true){
-                            $('#otpModal').modal('show');
-                        } else {
-                            alert('Failed to generate OTP 2');
-                        }
-                    },
-                    error: function (xhr) {
-                        let message = 'Something went wrong';
-
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            message = xhr.responseJSON.message;
-                        }
-
-                        alert(message);
-                    }
-                });
-            });
-
-            // Step 2: Verify OTP
-            $('#verify-btn').on('click', function () {
-
-                let otp1 = $('#otp_digit1').val();
-                let otp2 = $('#otp_digit2').val();
-                let otp3 = $('#otp_digit3').val();
-                let otp4 = $('#otp_digit4').val();
-                let otp5 = $('#otp_digit5').val();
-                let otp6 = $('#otp_digit6').val();
-
-                $.ajax({
-                    url: '/checkout_otp_post', // your OTP_Put API
-                    method: 'POST',
-                    data: {
-                        otp: otp1 + otp2 + otp3 + otp4 + otp5 + otp6
-                    },
-                    success: function (res) {
-
-                        if (res.success == true) {
-                            otpVerified = true;
-                            $('#otpModal').modal('hide');
-
-                            // Step 3: Submit form AFTER success
-                            $('#checkoutForm').submit();
-                        } else {
-                            //alert('Invalid OTP');
-                        }
-                    },
-                    error: function (xhr) {
-                        let message = 'Something went wrong';
-
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            message = xhr.responseJSON.message;
-                        }
-
-                        $('#otp-error').text(message).show();
-                    }
-                });
-            });
-
-        });
-    </script>
     <script>
         $(document).ready(function () {
 
@@ -862,6 +788,8 @@
 
         });
     </script>
+
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
 

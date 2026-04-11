@@ -279,101 +279,13 @@
                     <input type="text" class="form-control" placeholder="Coupon code">
                     <button class="card-button btn btn-danger">Apply Code</button>
                 </div>
-                <button type="button" id="checkoutButton" class="card-button btn btn-danger w-100">Checkout</button>
+                <button type="submit" id="checkoutButton" class="card-button btn btn-danger w-100">Checkout</button>
             </div>
             </form>
         </div>
     </div>
-
-
-    <div class="modal fade" id="otpModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center p-4">
-                     <div class="otp-title">Enter verification code</div>
-
-                        <div class="otp-subtitle">
-                            Please enter the OTP (One-Time Password)<br>
-                            sent to your registered email/phone number<br>
-                            to complete your verification.
-                        </div>
-
-                        <div id="otp-error" class="alert alert-danger p-2 mb-2" style="display:none;"></div>
-
-                        <!-- OTP Inputs -->
-                        <div class="d-flex justify-content-center otp-inputs mb-3">
-                            <input id="otp_digit1" type="tel" maxlength="1" inputmode="numeric"
-                                pattern="[0-9]*"
-                                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
-                                onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                            <input id="otp_digit2" type="tel" maxlength="1" inputmode="numeric"
-                                pattern="[0-9]*"
-                                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
-                                onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                            <input id="otp_digit3" type="tel" maxlength="1" inputmode="numeric"
-                                pattern="[0-9]*"
-                                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
-                                onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                            <input id="otp_digit4" type="tel" maxlength="1" inputmode="numeric"
-                                pattern="[0-9]*"
-                                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
-                                onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                            <input id="otp_digit5" type="tel" maxlength="1" inputmode="numeric"
-                                pattern="[0-9]*"
-                                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
-                                onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                            <input id="otp_digit6" type="tel" maxlength="1" inputmode="numeric"
-                                pattern="[0-9]*"
-                                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
-                                onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-
-                        </div>
-
-                        <!-- Timer -->
-                        <div class="timer mb-3">
-                            Remaining time: <span id="timer">00:49</span>
-                        </div>
-
-                        <script>
-                            let seconds = 300; // 5 minutes in seconds
-
-                            const interval = setInterval(() => {
-                                seconds--;
-
-                                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
-                                const secs = String(seconds % 60).padStart(2, '0');
-
-                                document.getElementById('timer').textContent = `${mins}:${secs}`;
-
-                                if (seconds <= 0) {
-                                    clearInterval(interval);
-                                    document.getElementById('timer').textContent = '00:00';
-                                }
-                            }, 1000);
-                        </script>
-                        <script>
-                            function checkOtp() {
-                                const inputs = document.querySelectorAll('.otp-inputs input');
-                                const allFilled = [...inputs].every(input => input.value.length === 1);
-                                document.getElementById('verify-btn').disabled = !allFilled;
-                            }
-                        </script>
-
-                        <!-- Button -->
-                        <button id="verify-btn" class="btn btn-verify w-100 mb-3" disabled>Verify Code</button>
-
-                        <!-- Resend -->
-                        <div>
-                            <small>Didn’t get an OTP?</small><br>
-                            <span class="resend">Resend Code</span>
-                        </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 
-<script></script>
 @include('plus.scripts')
 @include('plus.chatbot')
 @include('plus.footer')
