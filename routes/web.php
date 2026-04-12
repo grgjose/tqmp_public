@@ -142,11 +142,6 @@ Route::middleware([UserAuth::class])->group(function () {
     Route::post('/upload-conforme-user/{id}', [QuotationController::class, 'uploadConformeUser']);
     Route::post('/upload-ar-user/{id}', [QuotationController::class, 'uploadARUser']);
     Route::post('/upload-proof-of-payment/{id}', [QuotationController::class, 'uploadProofOfPayment']);
-    Route::get('/download-conforme-sp/{id}', [QuotationController::class, 'downloadConformeSalesRep']);
-    Route::get('/download-ar-sp/{id}', [QuotationController::class, 'downloadARSalesRep']);
-    Route::post('/upload-conforme-sp/{id}', [QuotationController::class, 'uploadConformeSalesRep']);
-    Route::post('/upload-ar-sp/{id}', [QuotationController::class, 'uploadARSalesRep']);
-    Route::get('/download-proof-of-payment/{id}', [QuotationController::class, 'downloadProofOfPayment']);
 
     // Quotations (with CheckNotification)
     Route::get('/show-quotation-messages/{reference}', [QuotationController::class, 'showQuotationMessages'])->middleware(CheckNotification::class);
@@ -212,6 +207,13 @@ Route::middleware([SalesAuth::class])->group(function () {
     Route::get('/order-get-driver-details/{orderId}/{driverId}', [OrderController::class, 'getDriverDetails']);
     Route::post('/order-cancel-order', [OrderController::class, 'cancelOrder']);
 
+    Route::get('/download-conforme-sp/{id}', [QuotationController::class, 'downloadConformeSalesRep']);
+    Route::get('/download-ar-sp/{id}', [QuotationController::class, 'downloadARSalesRep']);
+    Route::post('/upload-conforme-sp/{id}', [QuotationController::class, 'uploadConformeSalesRep']);
+    Route::post('/upload-ar-sp/{id}', [QuotationController::class, 'uploadARSalesRep']);
+    Route::get('/download-proof-of-payment/{id}', [QuotationController::class, 'downloadProofOfPayment']);
+
+
     // Quotations
     Route::get('/quotations', [QuotationController::class, 'index']);
     Route::get('/quotations-view/{id}', [QuotationController::class, 'show']);
@@ -238,7 +240,7 @@ Route::middleware([SalesAuth::class])->group(function () {
 
     // Inquiries
     Route::get('/inquiries', [InquiryController::class, 'index']);
-    Route::get('/inquiries-view/{id}', [InquiryController::class, 'index']);
+    Route::get('/inquiries-view/{id}', [InquiryController::class, 'show']);
 });
 
 /*

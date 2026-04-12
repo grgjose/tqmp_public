@@ -57,21 +57,6 @@ class InventoryController extends Controller
     }
 
     /**
-     * Store a resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'brand' => ['required'],
-            'product' => ['required'],
-            'model' => ['required'],
-            'details' => ['required'],
-            'quantity' => ['required'],
-        ]);
-
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update($id, Request $request)
@@ -81,7 +66,7 @@ class InventoryController extends Controller
         $my_user = $auth->user();
 
         if($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
-        if($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
+        if($my_user->usertype == 3) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $inventory = Inventory::find($id);
         if(!$inventory) return redirect('/dashboard')->with('error_msg', 'Unexpected Error!');

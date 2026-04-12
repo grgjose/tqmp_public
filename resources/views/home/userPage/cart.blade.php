@@ -90,7 +90,7 @@
                                                                         class="text-muted">{{ $product->price }}</small>
                                                                     <input type="hidden"
                                                                         name="price_{{ $cart->id }}"
-                                                                        class="hiddenPrice" value="">
+                                                                        class="hiddenPrice" value="{{ $cart->price }}">
                                                                 </div>
                                                                 @continue
                                                             @endif

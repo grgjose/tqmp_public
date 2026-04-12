@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RegistrationMail;
+use App\Mail\RegistrationApprovalMail;
+use App\Mail\RegistrationRejectionMail;
 use App\Mail\UserCreationMail;
 use App\Mail\ForgotPasswordMail;
 use Carbon\Carbon;
@@ -116,6 +118,17 @@ class UserController extends Controller
                 // Session ID no longer exists in DB
                 $user->last_session_id = null;
                 $user->save();
+            }
+        }
+
+        // 🧠 Step 2: If Usertype == 3, Check Status and Email Verified At
+        if ($user->usertype == 3) {
+            if ($user->status === "registered") {
+                return redirect('/home')->with('error_msg', 'Your user is not yet verified. Please wait for email confirmation.');
+            }
+
+            if ($user->email_verified_at == null) {
+                return redirect('/home')->with('error_msg', 'Your email is not yet verified. Please check your email for the verification link.');
             }
         }
 
@@ -317,7 +330,7 @@ class UserController extends Controller
         $user->contact_num = $validated['contact_num'];
         $user->email_verification_token = $this->generateGUID();
         $user->email_verification_sent = date("Y-m-d H:i:s");
-        $user->password = $validated['password'];
+        $user->password = Hash::make($validated['password']);
         $user->upload_file = $filename;
 
         $user->save();
@@ -590,7 +603,6 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'user_id' => ['required'],
-            'region' => ['required'],
         ]);
 
         $id = $validated['user_id'];
@@ -614,6 +626,15 @@ class UserController extends Controller
         if($user->email_verified_at == null){
             return redirect('/approvals')->with('error_msg', 'User Email is not yet Verified!');
         }
+
+        // Send Approval Email
+        $data = [
+            'name' => $user->fname.' '.$user->lname,
+            'message' => 'Congratulations! Your account has been approved. You can now log in and start using our services.',
+            'email_token' => $user->email_verification_token
+        ];
+
+        Mail::to($user->email)->send(new RegistrationApprovalMail($data));
 
         $user->status = "active";
         $user->save();
@@ -645,13 +666,14 @@ class UserController extends Controller
         $user->status = "rejected";
         $user->save();
 
+        // Send Rejection Email
         $data = [
             'name' => $user->fname.' '.$user->lname,
-            'message' => 'Hi! Your user is rejected due to',
+            'message' => 'We regret to inform you that your account registration has been rejected. For more information, please contact our support team.',
             'email_token' => $user->email_verification_token
         ];
     
-        Mail::to($user->email)->send(new RegistrationMail($data));
+        Mail::to($user->email)->send(new RegistrationRejectionMail($data));
 
         return redirect('/approvals')->with('success_msg', $user->email.' is now a Rejected Customer!');
     }
@@ -1058,6 +1080,25 @@ class UserController extends Controller
             return ['result' => true, 'status' => 'OTP sent successfully'];
         } else {
             return ['result' => false, 'status' => 'Failed to send OTP'];
+        }
+    }
+
+    /**
+     * Send SMS Message (Unused but can be used for future purposes like notifications)
+     */
+    public function sendMessage($number, $message)
+    {
+        $response = Http::post('https://api.semaphore.co/api/v4/messages', [
+            'apikey' => env('SEMAPHORE_API_KEY'),
+            'number' => $number,
+            'message' => $message,
+            'sendername' => env('SEMAPHORE_SENDER_NAME'),
+        ]);
+
+        if ($response->successful()) {
+            return response()->json(['status' => 'Message sent successfully']);
+        } else {
+            return response()->json(['status' => 'Failed to send message'], 500);
         }
     }
 

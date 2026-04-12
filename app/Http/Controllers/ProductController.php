@@ -529,7 +529,7 @@ class ProductController extends Controller
 
         Mail::to($mailTo)->cc($mailCc)->send(new OrderPlacedMail($data));
 
-        return redirect('/order-status/');
+        return redirect('/order-status')->with('success_msg', 'Checkout Successful!');
     }
 
     /**
