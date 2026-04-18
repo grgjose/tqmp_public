@@ -38,9 +38,9 @@ return new class extends Migration
             $table->boolean('isDeleted')->nullable()->default(false);
             $table->boolean('isDiscounted')->nullable()->default(false);
             $table->boolean('isSpecialDiscounted')->nullable()->default(false);
-            $table->string('otp1')->nullable()->default('');
-            $table->string('otp2')->nullable()->default('');
+            $table->string('otp')->nullable()->default('');
             $table->integer('otp_retry')->nullable()->default(0);
+            $table->timestamp('otp_last_retry')->nullable();
             $table->string('last_session_id')->nullable();
             $table->rememberToken();
             $table->timestamps();

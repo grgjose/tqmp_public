@@ -163,8 +163,7 @@ class UserController extends Controller
     public function logon_otp_get(Request $request)
     {
         /** @var \Illuminate\Auth\SessionGuard $auth */
-        //$auth = auth();
-        //$my_user = $auth->user();
+
 
         $my_user = User::where('email', $request->input('email'))->first();
 
@@ -187,15 +186,31 @@ class UserController extends Controller
             $number = "0" . substr($number, 3);
         }
 
-        if ($user->otp1 == "" || $user->otp1 == null || $user->otp1 == "null" || $user->otp1 == 0) {
-            $user->otp1 = $otp;
+        if ($user->otp == "" || $user->otp == null || $user->otp == "null" || $user->otp == 0) 
+        {
+            $user->otp = $otp;
+            $user->otp_last_retry = now();
+            $user->otp_retry = 1;
             $this->sendOtp($number, $msg, $otp);
-            $slot = 'otp1';
-        } elseif ($user->otp2 == "" || $user->otp2 == null || $user->otp2 == "null" || $user->otp2 == 0) {
-            $user->otp2 = $otp;
+        } 
+        elseif ($user->otp_retry < 3) 
+        {
+            $user->otp = $otp;
+            $user->otp_retry = $user->otp_retry + 1;
+            $user->otp_last_retry = now();
             $this->sendOtp($number, $msg, $otp);
-            $slot = 'otp2';
-        } else {
+        }
+        // If OTP retry is 3 but last retry was more than 5 minutes ago, allow to resend OTP
+        elseif ($user->otp_last_retry < now()->subMinutes(5)) 
+        {
+            $user->otp = $otp;
+            $user->otp_last_retry = now();
+            $user->otp_retry = 1; // Reset retry count to 1 since we're allowing a new OTP to be sent
+            $this->sendOtp($number, $msg, $otp);
+        }
+        // If OTP retry is 3 and last retry was less than 5 minutes ago, do not allow to resend OTP
+        else 
+        {
             return response()->json([
                 'success' => false,
                 'message' => 'OTP slots are full. Please try again later.'
@@ -217,9 +232,7 @@ class UserController extends Controller
     public function logon_otp_post(Request $request)
     {
         
-       /** @var \Illuminate\Auth\SessionGuard $auth */
-        //$auth = auth();
-        //$my_user = $auth->user();
+        /** @var \Illuminate\Auth\SessionGuard $auth */
 
         $my_user = User::where('email', $request->input('email'))->first();
 
@@ -237,12 +250,11 @@ class UserController extends Controller
         $otp = $validated['otp'];
         $user = User::find($my_user->id);
 
-        if($otp == $user->otp1 || $otp == $user->otp2)
+        if($otp == $user->otp)
         {
-
-            $user->otp1 = "";
-            $user->otp2 = "";
+            $user->otp = "";
             $user->otp_retry = 0;
+            $user->otp_last_retry = null;
             $user->save();
 
             return response()->json([
@@ -251,11 +263,11 @@ class UserController extends Controller
             ], 200);
         }
 
-        if($user->otp_retry == 3)
+        if($user->otp_retry >= 3)
         {
             return response()->json([
                 'success' => false,
-                'message' => 'Try again later',
+                'message' => 'OTP Slots are full, Try again later or after 5 minutes.',
             ], 400);    
         }
         
@@ -264,7 +276,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => false,
-            'message' => 'Invalid OTP',
+            'message' => 'Invalid OTP. Try again.',
         ], 400);
     }
 
