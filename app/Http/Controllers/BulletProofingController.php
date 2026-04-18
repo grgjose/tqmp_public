@@ -28,7 +28,7 @@ class BulletProofingController extends Controller
             ->join('product_images', 'products.id', '=', 'product_images.product_id')
             ->select('products.*', 'product_categories.category as category', 'product_images.filename as filename')
             ->where('product_categories.category', '=', 'Bullet Proofing')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         return view('home.home.bulletproofing.index', [
             'my_user' => $my_user,

@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('ext')->nullable();
             $table->string('address')->nullable();
             $table->dateTime('birthdate')->nullable();
-            $table->string('email')->unique();
+            $table->string('email')->nullable();
             $table->string('contact_num')->nullable();
             $table->string('user_pic')->nullable()->default('default.png');
             $table->string('upload_file')->nullable();
@@ -35,7 +35,6 @@ return new class extends Migration
             $table->string('status')->nullable()->default('registered');
             $table->string('remarks')->nullable();
             $table->string('approval_reason')->nullable();
-            $table->boolean('isDeleted')->nullable()->default(false);
             $table->boolean('isDiscounted')->nullable()->default(false);
             $table->boolean('isSpecialDiscounted')->nullable()->default(false);
             $table->string('otp')->nullable()->default('');
@@ -44,6 +43,7 @@ return new class extends Migration
             $table->string('last_session_id')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

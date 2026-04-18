@@ -32,12 +32,12 @@ class UserController extends Controller
         if($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
         if($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
-        //$users = DB::table('users')->where('isDeleted', '=', false)->get();
+        //$users = DB::table('users')->where('deleted_at', '=', null)->get();
 
         $users = DB::table('users')
         ->join('usertypes', 'users.usertype', '=', 'usertypes.id')
         ->select('users.*', 'usertypes.title as usertype_title')
-        ->where('users.isDeleted', '=', false)
+        ->where('users.deleted_at', '=', null)
         ->get();
 
         return view('dashboard.index', [
@@ -158,6 +158,50 @@ class UserController extends Controller
     }
 
     /**
+     * Validate credentials only (pre-OTP check)
+     */
+    public function logon_check(Request $request)
+    {
+        $my_user = User::where('email', $request->input('email'))->first();
+
+        if ($my_user == null) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials.'
+            ], 401);
+        }
+
+        if (!Hash::check($request->input('password'), $my_user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials.'
+            ], 401);
+        }
+
+        // Check account status before even sending OTP
+        if ($my_user->usertype == 3) {
+            if ($my_user->status === 'registered') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your account is not yet verified.'
+                ], 403);
+            }
+
+            if ($my_user->email_verified_at == null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your email is not yet verified.'
+                ], 403);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Credentials valid.'
+        ], 200);
+    }
+
+    /**
      * Login of User (OTP Get)
      */
     public function logon_otp_get(Request $request)
@@ -227,13 +271,10 @@ class UserController extends Controller
     }
 
     /**
-     * Login of User (OTP Post)
+     * Login of User (OTP Post) — creates session ONLY after OTP is verified
      */
     public function logon_otp_post(Request $request)
     {
-        
-        /** @var \Illuminate\Auth\SessionGuard $auth */
-
         $my_user = User::where('email', $request->input('email'))->first();
 
         if ($my_user == null) {
@@ -250,34 +291,70 @@ class UserController extends Controller
         $otp = $validated['otp'];
         $user = User::find($my_user->id);
 
-        if($otp == $user->otp)
-        {
-            $user->otp = "";
-            $user->otp_retry = 0;
-            $user->otp_last_retry = null;
+        // OTP retry hard block
+        if ($user->otp_retry >= 3 && $user->otp_last_retry > now()->subMinutes(5)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'OTP slots are full. Try again after 5 minutes.',
+            ], 400);
+        }
+
+        if ($otp != $user->otp) {
+            $user->otp_retry = $user->otp_retry + 1;
             $user->save();
 
             return response()->json([
-                'success' => true,
-                'message' => 'Valid OTP.',
-            ], 200);
+                'success' => false,
+                'message' => 'Invalid OTP. Try again.',
+            ], 400);
         }
 
-        if($user->otp_retry >= 3)
-        {
+        // ✅ OTP is correct — NOW create the session
+        $credentials = [
+            'email'    => $request->input('email'),
+            'password' => $request->input('password'),
+        ];
+
+        /** @var \Illuminate\Auth\SessionGuard $auth */
+        $auth = auth();
+
+        if (!$auth->attempt($credentials)) {
             return response()->json([
                 'success' => false,
-                'message' => 'OTP Slots are full, Try again later or after 5 minutes.',
-            ], 400);    
+                'message' => 'Authentication failed. Please try again.',
+            ], 401);
         }
+
+        if (is_null($user->email_verified_at) || strtolower(trim($user->status)) !== 'active') {
+
+            $auth->logout(); // prevent login if conditions fail
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Email is not verified or account is inactive.',
+            ], 403);
+        }
+
         
-        $user->otp_retry = $user->otp_retry + 1;
+        $request->session()->regenerate();
+
+        // Clear OTP
+        $user->otp = "";
+        $user->otp_retry = 0;
+        $user->otp_last_retry = null;
+
+        // Save new session ID
+        $user->last_session_id = Session::getId();
         $user->save();
 
+        // Return redirect destination so frontend can follow it
+        $redirect = $user->usertype <= 2 ? '/dashboard' : '/home';
+
         return response()->json([
-            'success' => false,
-            'message' => 'Invalid OTP. Try again.',
-        ], 400);
+            'success'  => true,
+            'message'  => 'Login successful.',
+            'redirect' => $redirect,
+        ], 200);
     }
 
     /**
@@ -315,9 +392,9 @@ class UserController extends Controller
             'fname' => ['required', 'min:3'],
             'mname' => ['nullable'],
             'lname' => ['required'],
-            'email' => ['required'],
+            'email' => ['required', 'email', 'unique:users,email'],
             'birthdate' => ['required'],
-            'contact_num' => ['required'],
+            'contact_num' => ['required', 'regex:/^(09|\+639)\d{9}$/', 'unique:users,contact_num'],
             'password' => ['required'],
             'upload_file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
         ]);
@@ -355,7 +432,7 @@ class UserController extends Controller
     
         Mail::to($validated['email'])->send(new RegistrationMail($data));
 
-        return redirect('/home')->with('success_msg', 'Please check your email!');
+        return redirect('/home')->with('success_msg', 'PLEASE CHECK YOUR INBOX / SPAM EMAIL TO VERIFY YOUR ACCOUNT!');
 
     }
 
@@ -456,7 +533,8 @@ class UserController extends Controller
        $user->contact_num = $validated['contact_num'];
        $user->email_verification_token = $this->generateGUID();
        $user->email_verification_sent = date("Y-m-d H:i:s");
-       $user->password = $password;
+       $user->status = "Active";
+       $user->password = Hash::make($password);
        $user->upload_file = $filename;
 
        $user->save();
@@ -486,7 +564,7 @@ class UserController extends Controller
         if($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
         if($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
-        $users = DB::table('users')->where('isDeleted', '=', false)->where('id', '=', $id)->get();
+        $users = DB::table('users')->where('deleted_at', '=', null)->where('id', '=', $id)->get();
 
         if($users == null) return redirect('/dashboard')->with('error_msg', 'Unexpected Error!');
         if(count($users) == 0) return redirect('/dashboard')->with('error_msg', 'Unexpected Error!');
@@ -510,8 +588,7 @@ class UserController extends Controller
         if($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $users = DB::table('users')
-        ->where('usertype', '=', 3)
-        ->where('status', 'Active')->get();
+        ->where('usertype', '=', 3)->get();
 
         return view('dashboard.index', [
             'my_user' => $my_user,
@@ -519,6 +596,30 @@ class UserController extends Controller
         ])
         ->with('title', 'Consumers')
         ->with('main_content', 'dashboard.modules.consumers');
+    }
+
+    /**
+     * Change the status of a consumer
+     */
+    public function changeConsumerStatus($id, $status)
+    {
+        /** @var \Illuminate\Auth\SessionGuard $auth */
+        $auth = auth();
+        $my_user = $auth->user();
+
+        if($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
+        if($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
+
+        $user = User::find($id);
+
+        if (!$user) {
+            return redirect('/dashboard')->with('error_msg', 'User not found!');
+        }
+
+        $user->status = $status;
+        $user->save();
+
+        return redirect('/consumers')->with('success_msg', 'Consumer status updated successfully!');
     }
 
     /**
@@ -629,8 +730,8 @@ class UserController extends Controller
 
         $user = User::find($id);
 
-        //Generate Customer Code (C-<6 digit number base on ID>-<Region>)
-        $customer_code = 'C-'.str_pad($user->id, 6, '0', STR_PAD_LEFT).'-'.$validated['region'];
+        //Generate Customer Code (C-<6 digit number base on ID>-<3> where 3 is the usertype for customer)
+        $customer_code = 'C-'.str_pad($user->id, 6, '0', STR_PAD_LEFT).'-3';
 
         $user->code = $customer_code;
 
@@ -702,7 +803,7 @@ class UserController extends Controller
         if($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
         if($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
-        $users = DB::table('users')->where('isDeleted', '=', false)->where('id', '=', $id)->get();
+        $users = DB::table('users')->where('deleted_at', '=', null)->where('id', '=', $id)->get();
 
         if($users == null) return redirect('/dashboard')->with('error_msg', 'Unexpected Error!');
         if(count($users) == 0) return redirect('/dashboard')->with('error_msg', 'Unexpected Error!');
@@ -765,7 +866,7 @@ class UserController extends Controller
         $users = DB::table('users')
         ->join('usertypes', 'users.usertype', '=', 'usertypes.id')
         ->select('users.*', 'usertypes.title as usertype_title')
-        ->where('users.isDeleted', '=', false)
+        ->where('users.deleted_at', '=', null)
         ->get();
 
         if($users == null) return redirect('/dashboard')->with('error_msg', 'Unexpected Error!');
@@ -798,8 +899,7 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         $user = User::find($id);
-        $user->isDeleted = true;
-        $user->save();
+        $user->delete();
 
         return redirect('/users')->with('success_msg', 'User Successfully Deleted');
     }

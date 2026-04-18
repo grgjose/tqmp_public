@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title')->nullable();
             $table->string('upload_file')->nullable();
-            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

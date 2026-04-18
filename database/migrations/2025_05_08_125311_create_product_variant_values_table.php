@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->integer('product_variant_keys_id');
             $table->string('value');
-            $table->boolean('isDeleted')->default(false)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

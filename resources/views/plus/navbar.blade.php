@@ -321,10 +321,10 @@
 
                 <!-- Timer -->
                 <div class="timer mb-3">
-                    Remaining time: <span id="timer">00:49</span>
+                    Remaining time: <span id="timer">05:00</span>
                 </div>
 
-                <script>
+                {{-- <script>
                     let seconds = 300; // 5 minutes in seconds
 
                     const interval = setInterval(() => {
@@ -340,7 +340,7 @@
                             document.getElementById('timer').textContent = '00:00';
                         }
                     }, 1000);
-                </script>
+                </script> --}}
                 <script>
                     function checkOtp() {
                         const inputs = document.querySelectorAll('.otp-inputs input');

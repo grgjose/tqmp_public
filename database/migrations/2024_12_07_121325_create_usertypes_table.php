@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('access');
-            $table->boolean('isDeleted')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

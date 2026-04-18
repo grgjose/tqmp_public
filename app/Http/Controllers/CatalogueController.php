@@ -21,7 +21,7 @@ class CatalogueController extends Controller
         if ($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $catalogues = DB::table('catalogues')
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
 
         return view('dashboard.index', [
             'my_user' => $my_user,
@@ -104,7 +104,7 @@ class CatalogueController extends Controller
 
         $catalogue = DB::table('catalogues')
             ->where('id', '=', $id)
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
 
         if($catalogue == null || count($catalogue) == 0){
             return redirect('/catalogue')->with('error_msg', 'Unexpected Error!');
@@ -163,8 +163,7 @@ class CatalogueController extends Controller
     public function destroy($id)
     {
         $catalogue = Catalogue::find($id);
-        $catalogue->isDeleted = true;
-        $catalogue->save();
+        $catalogue->delete();
 
         return redirect('/catalogue')->with('success_msg', 'Catalogue Successfully Deleted');
     }

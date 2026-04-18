@@ -311,7 +311,7 @@ class HomeController extends Controller
                 'product_sub_categories.category as sub_category',
                 'pi.filename as image'
             )
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         $productSubCategories = DB::table('product_sub_categories')->get();
 

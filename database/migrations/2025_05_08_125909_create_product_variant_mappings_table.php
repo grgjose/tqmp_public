@@ -20,8 +20,8 @@ return new class extends Migration
                 ['product_variant_id', 'product_variant_key_id'],
                 'pvm_variant_key_unique' // custom name under 64 chars
             );
-            $table->boolean('isDeleted')->default(false)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\User;
 use App\Models\ProductImage;
 use App\Models\Order;
+use App\Models\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Imports\DatabaseImport;
@@ -32,7 +33,7 @@ class ProductController extends Controller
         $products = DB::table('products')
             ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->select('products.*', 'product_categories.category as category')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         $productImages = DB::table('product_images')->get();
 
@@ -168,7 +169,7 @@ class ProductController extends Controller
         $products = DB::table('products')
             ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->select('products.*', 'product_categories.category as category')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         $productImages = DB::table('product_images')->get();
         $shippings = DB::table('shippings')->where('user_id', '=', $my_user->id)->where('isDefault', '=', true)->get();
@@ -178,7 +179,7 @@ class ProductController extends Controller
             ->select(
                 'quotations.*', 
                 'qi.filename as image')
-            ->where('quotations.isDeleted', '=', false)->get();
+            ->where('quotations.deleted_at', '=', null)->get();
 
         $settings_nav = DB::table('settings')->where('key', 'like', 'NAVBAR_%')->pluck('value', 'key');
             
@@ -261,7 +262,6 @@ class ProductController extends Controller
         $product->discounted_price = $validated['discounted_price'];
         $product->special_discounted_price = $validated['special_discounted_price'];
         $product->status = "active";
-        $product->isDeleted = false;
         $product->save();
 
         if(count($filenames) > 0){
@@ -272,6 +272,12 @@ class ProductController extends Controller
                 $productImage->save();
             }
         }
+
+        $log = new Log();
+        $log->user_id = $my_user->id ?? null;
+        $log->action = 'Created product with id ' . $product->id;
+        $log->details = 'Created product: ' . $product->name . ' ID: ' . $product->id . ' by user: ' . ($my_user->fname ?? 'Unknown') . ' ' . ($my_user->lname ?? 'User');
+        $log->save();
 
         return redirect('/products')->with('success_msg', $product->name.' is Created!');
     }
@@ -288,7 +294,7 @@ class ProductController extends Controller
         if ($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
         if ($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
-        $products = DB::table('products')->where('isDeleted', '=', false)->where('id', '=', $id)->get();
+        $products = DB::table('products')->where('deleted_at', '=', null)->where('id', '=', $id)->get();
         $productCategories = DB::table('product_categories')->get();
         $productImages = DB::table('product_images')->get();
 
@@ -315,7 +321,7 @@ class ProductController extends Controller
         if ($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
         if ($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
-        $products = DB::table('products')->where('isDeleted', '=', false)->where('id', '=', $id)->get();
+        $products = DB::table('products')->where('deleted_at', '=', null)->where('id', '=', $id)->get();
         $productCategories = DB::table('product_categories')->get();
         $productSubCategories = DB::table('product_sub_categories')->get();
         $productImages = DB::table('product_images')->get();
@@ -399,6 +405,51 @@ class ProductController extends Controller
             }
         }
 
+        // Capture original values before update
+            $changes = [];
+
+            if ($product->name != $validated['name']) {
+                $changes[] = "name: '{$product->name}' -> '{$validated['name']}'";
+            }
+
+            if ($product->display_name != $validated['display_name']) {
+                $changes[] = "display_name: '{$product->display_name}' -> '{$validated['display_name']}'";
+            }
+
+            if ($product->description != $validated['description']) {
+                $changes[] = "description updated";
+            }
+
+            if ($product->category_id != $validated['category_id']) {
+                $changes[] = "category_id: '{$product->category_id}' -> '{$validated['category_id']}'";
+            }
+
+            if ($product->brand != $validated['brand']) {
+                $changes[] = "brand: '{$product->brand}' -> '{$validated['brand']}'";
+            }
+
+            if ($product->price != $validated['price']) {
+                $changes[] = "price: '{$product->price}' -> '{$validated['price']}'";
+            }
+
+            if ($product->discounted_price != $validated['discounted_price']) {
+                $changes[] = "discounted_price: '{$product->discounted_price}' -> '{$validated['discounted_price']}'";
+            }
+
+            if ($product->special_discounted_price != $validated['special_discounted_price']) {
+                $changes[] = "special_discounted_price updated";
+            }
+
+            if ($request->has('images_to_delete')) {
+                $changes[] = "images deleted";
+            }
+
+            if ($request->hasFile('upload_files')) {
+                $changes[] = "new images uploaded";
+            }
+        //
+
+        // Update product with new values
         $product->name = $validated['name'];
         $product->display_name = $validated['display_name'];
         $product->description = $validated['description'];
@@ -411,6 +462,17 @@ class ProductController extends Controller
 
         $product->save();
 
+        // Define what is updated in the log details
+        $log = new Log();
+        $log->user_id = $my_user->id ?? null;
+        $log->action = 'Updated product with id ' . $product->id;
+        $log->details = count($changes)
+                        ? 'Updated product: '.$product->name.
+                        ' | Changed: '.implode(', ', $changes).
+                        ' | By user: '.($my_user->fname ?? 'Unknown').' '.($my_user->lname ?? 'User')
+                        : 'Product opened for update but no fields changed.';
+        $log->save();
+
         return redirect('/products')->with('success_msg', $product->name.' is Updated');
     }
 
@@ -420,8 +482,7 @@ class ProductController extends Controller
     public function destroy($id)
     {
         $product = Product::find($id);
-        $product->isDeleted = true;
-        $product->save();
+        $product->delete();
 
         return redirect('/products')->with('success_msg', 'Product Successfully Deleted');
     }
@@ -494,7 +555,7 @@ class ProductController extends Controller
         $products = DB::table('products')
             ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
             ->select('products.*', 'product_categories.category as category')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         // Prepare Orders
         $orders = DB::table('orders')

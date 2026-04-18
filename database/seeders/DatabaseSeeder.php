@@ -75,6 +75,7 @@ class DatabaseSeeder extends Seeder
                     'address' => $row[7],
                     'birthdate' => is_numeric($row[8]) ? Date::excelToDateTimeObject($row[8])->format('Y-m-d') : null,
                     'email' => $row[9],
+                    'email_verified_at' =>  now(),
                     'contact_num' => $row[10],
                     'user_pic' => $row[11],
                     'upload_file' => null,
@@ -149,7 +150,6 @@ class DatabaseSeeder extends Seeder
                 ProductImage::factory()->create([
                     'product_id' => $idx,
                     'filename' => $row[15],
-                    'isDeleted' => false,
                 ]);
 
                 $idx++;

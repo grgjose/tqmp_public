@@ -48,6 +48,7 @@ Route::get('/about', [HomeController::class, 'about']);
 Route::get('/contact', [HomeController::class, 'contact']);
 Route::post('/inquiry-store', [HomeController::class, 'addInquiry']);
 Route::post('/login', [UserController::class, 'logon']);
+Route::post('/login_check', [UserController::class, 'logon_check']);
 Route::post('/login_otp_get', [UserController::class, 'logon_otp_get']);
 Route::post('/login_otp_post', [UserController::class, 'logon_otp_post']);
 Route::post('/logout', [UserController::class, 'logout']);
@@ -70,8 +71,6 @@ Route::get('/number', [HomeController::class, 'number']);
 Route::get('/otp', [HomeController::class, 'otp']);
 Route::get('/success', [HomeController::class, 'success']);
 Route::get('/unsuccessful', [HomeController::class, 'unsuccessful']);
-
-
 
 
 /*
@@ -113,9 +112,6 @@ Route::middleware([AllUserAuth::class])->group(function () {
     });
 
 });
-
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -229,6 +225,8 @@ Route::middleware([SalesAuth::class])->group(function () {
 
     // Consumers & Approvals
     Route::get('/consumers', [UserController::class, 'consumers']);
+    Route::get('/consumers-change-status/{id}/{status}', [UserController::class, 'changeConsumerStatus']);
+
     Route::get('/apply-discount/{id}', [UserController::class, 'applyDiscount']);
     Route::get('/apply-special-discount/{id}', [UserController::class, 'applySpecialDiscount']);
     Route::get('/remove-discount/{id}', [UserController::class, 'removeDiscount']);

@@ -48,11 +48,10 @@ return new class extends Migration
             $table->boolean('isAddedToCart')->default(false)->nullable();
 
             $table->datetime('valid_until')->nullable();
-
             $table->string('cancel_remarks')->nullable();
-
-            $table->boolean('isDeleted')->default(false);
+            
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

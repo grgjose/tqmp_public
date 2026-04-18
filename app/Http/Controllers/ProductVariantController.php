@@ -23,10 +23,10 @@ class ProductVariantController extends Controller
         $products = DB::table('products')
         ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
         ->select('products.*', 'product_categories.category as category')
-        ->where('products.isDeleted', '=', false)->get();
+        ->where('products.deleted_at', '=', null)->get();
 
         $productVariants = DB::table('product_variants')
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
 
         return view('dashboard.index', [
             'my_user' => $my_user,
@@ -52,7 +52,7 @@ class ProductVariantController extends Controller
         $products = DB::table('products')
         ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
         ->select('products.*', 'product_categories.category as category')
-        ->where('products.isDeleted', '=', false)->get();
+        ->where('products.deleted_at', '=', null)->get();
 
         if($products == null || count($products) == 0){
             return redirect('/product-variants')->with('error_msg', 'Unexpected Error!');
@@ -114,11 +114,11 @@ class ProductVariantController extends Controller
         $products = DB::table('products')
         ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
         ->select('products.*', 'product_categories.category as category')
-        ->where('products.isDeleted', '=', false)->get();
+        ->where('products.deleted_at', '=', null)->get();
 
         $productVariants = DB::table('product_variants')
             ->where('id', '=', $id)
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
 
         if($products == null || count($products) == 0){
             return redirect('/product-variants')->with('error_msg', 'Unexpected Error!');
@@ -169,9 +169,8 @@ class ProductVariantController extends Controller
     public function destroy($id)
     {
         $productVariant = ProductVariant::find($id);
-        $productVariant->isDeleted = true;
-        $productVariant->save();
+        $productVariant->delete();
 
-        return redirect('/product-variants')->with('success_msg', 'Product Category Successfully Deleted');
+        return redirect('/product-variants')->with('success_msg', 'Product Variant Successfully Deleted');
     }
 }

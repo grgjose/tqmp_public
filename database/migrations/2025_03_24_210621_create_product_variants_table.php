@@ -18,8 +18,8 @@ return new class extends Migration
             $table->double('price')->nullable();
             $table->integer('stock')->nullable();
             $table->string('status')->nullable();
-            $table->boolean('isDeleted')->default(false)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

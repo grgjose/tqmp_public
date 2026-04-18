@@ -22,7 +22,7 @@ class ProductCategoryController extends Controller
         if ($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $productCategories = DB::table('product_categories')
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
 
         return view('dashboard.index', [
             'my_user' => $my_user,
@@ -45,7 +45,7 @@ class ProductCategoryController extends Controller
         if ($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $productCategories = DB::table('product_categories')
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
 
         if($productCategories == null || count($productCategories) == 0){
             return redirect('/product-categories')->with('error_msg', 'Unexpected Error!');
@@ -88,7 +88,7 @@ class ProductCategoryController extends Controller
     {
         $subCategories = DB::table('product_sub_categories')
             ->where('category_id', '=', $id)
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
         
         return view('dashboard.settings.product-categories-view', [
             'subCategories' => $subCategories,
@@ -110,7 +110,7 @@ class ProductCategoryController extends Controller
 
         $productCategories = DB::table('product_categories')
             ->where('id', '=', $id)
-            ->where('isDeleted', '=', false)->get();
+            ->where('deleted_at', '=', null)->get();
 
         if($productCategories == null || count($productCategories) == 0){
             return redirect('/product-categories')->with('error_msg', 'Unexpected Error!');
@@ -154,15 +154,14 @@ class ProductCategoryController extends Controller
     public function destroy($id)
     {
 
-        $products = DB::table('products')->where('category_id', '=', $id)->where('isDeleted', '=', false)->get();
+        $products = DB::table('products')->where('category_id', '=', $id)->where('deleted_at', '=', null)->get();
         
         if($products != null || count($products) > 0){
             return redirect('/product-categories')->with('error_msg', 'Product Category is currently being used hence cannot be deleted.');
         }
 
         $productsCategory = ProductCategory::find($id);
-        $productsCategory->isDeleted = true;
-        $productsCategory->save();
+        $productsCategory->delete();
 
         return redirect('/product-categories')->with('success_msg', 'Product Category Successfully Deleted');
     }
@@ -223,15 +222,14 @@ class ProductCategoryController extends Controller
         if ($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
         if ($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
-        $products = DB::table('products')->where('sub_category_id', '=', $id)->where('isDeleted', '=', false)->get();
+        $products = DB::table('products')->where('sub_category_id', '=', $id)->where('deleted_at', '=', null)->get();
 
         if(count($products) > 0){
             return redirect('/product-categories')->with('error_msg', 'Product Sub-Category is currently being used hence cannot be deleted.');
         }
 
         $sub_category = ProductSubCategory::find($id);
-        $sub_category->isDeleted = true;
-        $sub_category->save();
+        $sub_category->delete();
 
         return redirect('/product-categories')->with('clickThis', 'button'.$sub_category->category_id)->with('success_msg', 'Product Sub-Category Successfully Deleted');   
     }

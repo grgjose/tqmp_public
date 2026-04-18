@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('link')->nullable();
             $table->boolean('isRead')->default(false)->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

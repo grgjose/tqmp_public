@@ -27,8 +27,8 @@ return new class extends Migration
             $table->double('price')->nullable();
             $table->double('discounted_price')->nullable();
             $table->double('special_discounted_price')->nullable();
-            $table->boolean('isDeleted')->nullable()->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

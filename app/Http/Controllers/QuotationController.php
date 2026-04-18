@@ -28,11 +28,11 @@ class QuotationController extends Controller
         if ($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $quotations = DB::table('quotations')
-        ->where('isDeleted', '=', false)
+        ->where('deleted_at', '=', null)
         ->orderBy('created_at', 'DESC')->get();
 
         $products = DB::table('products')
-        ->where('isDeleted', '=', false)
+        ->where('deleted_at', '=', null)
         ->orderBy('created_at', 'DESC')->get();
 
         $quotationMessages = DB::table('quotation_messages')
@@ -40,8 +40,8 @@ class QuotationController extends Controller
         ->select('quotation_messages.*', 'users.usertype as usertype', 'users.fname as fname', 'users.lname as lname')
         ->get();
 
-        $users = DB::table('users')->where('isDeleted', '=', false)->get();
-        $usertypes = DB::table('usertypes')->where('isDeleted', '=', false)->get();
+        $users = DB::table('users')->where('deleted_at', '=', null)->get();
+        $usertypes = DB::table('usertypes')->where('deleted_at', '=', null)->get();
 
         return view('dashboard.index', [
             'my_user' => $my_user,
@@ -202,7 +202,7 @@ class QuotationController extends Controller
 
         $quotations = DB::table('quotations')
         ->where('id', '=', $id)
-        ->where('isDeleted', '=', false)->get();
+        ->where('deleted_at', '=', null)->get();
 
         $quotationMessages = DB::table('quotation_messages')
         ->join('users', 'quotation_messages.from_user_id', '=', 'users.id')
@@ -212,7 +212,7 @@ class QuotationController extends Controller
 
         $quotationImages = DB::table('quotation_images')->where('quotation_id', '=', $id)->get();
 
-        $users = DB::table('users')->where('usertype', '=', 3)->where('isDeleted', '=', false)->get();
+        $users = DB::table('users')->where('usertype', '=', 3)->where('deleted_at', '=', null)->get();
 
         $products = DB::table('products')
             ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
@@ -223,7 +223,7 @@ class QuotationController extends Controller
                 'product_categories.category as category',
                 'product_sub_categories.category as sub_category',
                 'pi.filename as image')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         return view('dashboard.modules.quotations-view', [
             'my_user' => $my_user,
@@ -258,8 +258,7 @@ class QuotationController extends Controller
     public function destroy(string $id)
     {
         $quotation = Quotation::find($id);
-        $quotation->isDeleted = true;
-        $quotation->save();
+        $quotation->delete();
 
         return redirect('/users')->with('success_msg', 'User Successfully Deleted');
     }
@@ -299,7 +298,7 @@ class QuotationController extends Controller
                 'product_categories.category as category',
                 'product_sub_categories.category as sub_category',
                 'pi.filename as image')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         $settings_nav = DB::table('settings')->where('key', 'like', 'NAVBAR_%')->pluck('value', 'key');
 
@@ -341,7 +340,7 @@ class QuotationController extends Controller
                 'product_categories.category as category',
                 'product_sub_categories.category as sub_category',
                 'pi.filename as image')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
         $settings_nav = DB::table('settings')->where('key', 'like', 'NAVBAR_%')->pluck('value', 'key');
             
@@ -563,7 +562,7 @@ class QuotationController extends Controller
 
         $quotations = DB::table('quotations')
         ->where('id', '=', $validated['quotation_id'])
-        ->where('isDeleted', '=', false)
+        ->where('deleted_at', '=', null)
         ->orderBy('created_at', 'DESC')->get();
 
         $quotationMessages = DB::table('quotation_messages')
@@ -572,7 +571,7 @@ class QuotationController extends Controller
         ->where('quotation_messages.quotation_id', '=', $validated['quotation_id'])
         ->get();
 
-        $users = DB::table('users')->where('isDeleted', '=', false)->get();
+        $users = DB::table('users')->where('deleted_at', '=', null)->get();
 
         $products = DB::table('products')
             ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
@@ -583,9 +582,9 @@ class QuotationController extends Controller
                 'product_categories.category as category',
                 'product_sub_categories.category as sub_category',
                 'pi.filename as image')
-            ->where('products.isDeleted', '=', false)->get();
+            ->where('products.deleted_at', '=', null)->get();
 
-        $usertypes = DB::table('usertypes')->where('isDeleted', '=', false)->get();
+        $usertypes = DB::table('usertypes')->where('deleted_at', '=', null)->get();
 
         return view('dashboard.index', [
             'my_user' => $my_user,
@@ -626,7 +625,7 @@ class QuotationController extends Controller
 
         $quotations = DB::table('quotations')
         ->where('id', '=', $validated['quotation_id'])
-        ->where('isDeleted', '=', false)
+        ->where('deleted_at', '=', null)
         ->orderBy('created_at', 'DESC')->get();
 
         return redirect('/show-quotation/'.$quotations[0]->reference);

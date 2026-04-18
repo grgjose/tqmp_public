@@ -38,11 +38,11 @@
                                     <td>{{ $user->address }}</td>
                                     <td>
                                         @if($user->isSpecialDiscounted == true)
-                                            "Special Discount"
+                                            Special Discount
                                         @elseif($user->isDiscounted == true)
-                                            "Normal Discount"
+                                            Normal Discount
                                         @else
-                                            "None"
+                                            None
                                         @endif
 
                                     </td>
@@ -52,8 +52,8 @@
                                                 {{ $user->status }}
                                             </button>
                                             <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="#">Active</a></li>
-                                                <li><a class="dropdown-item" href="#">Inactive</a></li>
+                                                <li><a class="dropdown-item" href="/consumers-change-status/{{ $user->id }}/Active">Active</a></li>
+                                                <li><a class="dropdown-item" href="/consumers-change-status/{{ $user->id }}/Inactive">Inactive</a></li>
                                             </ul>
                                         </div>
                                     </td>

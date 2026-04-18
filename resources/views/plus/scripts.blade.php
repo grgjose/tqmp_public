@@ -10,22 +10,28 @@
     <script src="https://unpkg.com/@panzoom/panzoom@4.6.0/dist/panzoom.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 
+    <script>
+        $(document).ready(function() {
+            toastr.options.preventDuplicates = true;
+            toastr.options.timeOut = 0;
+            toastr.options.extendedTimeOut = 0;
+            toastr.options.closeButton = true;
+        });
+    </script>
+
     <!-- General Scripts -->
     @if(session()->has('error_msg'))
     <script>
-        toastr.options.preventDuplicates = true;
         toastr.error("{{ session('error_msg') }}");
     </script>
     @endif
     @error('code')
     <script>
-        toastr.options.preventDuplicates = true;
         toastr.error('Code already exists');
     </script>
     @enderror
     @if(session()->has('success_msg'))
     <script>
-        toastr.options.preventDuplicates = true;
         toastr.success("{{ session('success_msg') }}");
     </script>
     @endif
@@ -44,7 +50,6 @@
 
         setInterval(fetchNotifications, 10000);
     </script>
-
 
     @if(isset($my_user))
         <script>
@@ -701,8 +706,45 @@
         $(document).ready(function () {
 
             let otpVerified = false;
+
+            // OTP Timer — controlled, not auto-starting
+            let otpTimerInterval = null;
+
+            function startOtpTimer() {
+                clearInterval(otpTimerInterval); // clear any existing timer first
+
+                let seconds = 300; // 5 minutes
+                const timerEl = document.getElementById('timer');
+
+                // Set initial display immediately
+                timerEl.textContent = '05:00';
+
+                otpTimerInterval = setInterval(function () {
+                    seconds--;
+
+                    const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+                    const secs = String(seconds % 60).padStart(2, '0');
+                    timerEl.textContent = mins + ':' + secs;
+
+                    if (seconds <= 0) {
+                        clearInterval(otpTimerInterval);
+                        timerEl.textContent = '00:00';
+                    }
+                }, 1000);
+            }
+
             // If URL is not /home, skip OTP flow and allow normal checkout process
-            if (window.location.href === "/home")  return;
+            if (window.location.pathname !== "/home") return;
+
+            
+            // Prevent loginModal from closing while OTP step is active
+            $('#loginModal').on('hide.bs.modal', function (e) {
+                const otpIsVisible = !$('#otpModal').hasClass('d-none');
+                if (otpIsVisible) {
+                    e.preventDefault();   // cancels the hide
+                    e.stopPropagation();
+                }
+            });
 
             $.ajaxSetup({
                 headers: {
@@ -710,35 +752,53 @@
                 }
             });
 
-            // Step 1: Click Checkout → Call OTP_Get + show modal
+            // Step 1: Click Login → Call OTP_Get + show modal
             $('#loginSubmitBtn').on('click', function (e) {
                 e.preventDefault();
 
+                const email = $('#loginEmail').val();
+                const password = $('#loginPassword').val();
+
+                // Step 1: Validate credentials first
                 $.ajax({
-                    url: '/login_otp_get', // your OTP_Get API
+                    url: '/login_check',
                     method: 'POST',
-                    data: {
-                        email: $('#loginEmail').val(),
-                        password: $('#loginPassword').val()
-                    },
+                    data: { email: email, password: password },
                     success: function (res) {
-                        if(res.success == true){
-                            $('#loginModalBody').addClass('d-none');
-                            $('#otpModal').removeClass('d-none').modal('show');
-                        } else {
-                            $('#loginModalBody').removeClass('d-none').modal('show');
-                            $('#otpModal').addClass('d-none');
-                            alert('Failed to generate OTP 2');
+                        if (res.success == true) {
+
+                            // Step 2: Credentials valid — now request OTP
+                            $.ajax({
+                                url: '/login_otp_get',
+                                method: 'POST',
+                                data: { email: email, password: password },
+                                success: function (otpRes) {
+                                    if (otpRes.success == true) {
+                                        $('#loginModalBody').addClass('d-none');
+                                        $('#otpModal').removeClass('d-none');
+                                        startOtpTimer(); // ← starts here, not on page load
+                                    } else {
+                                        alert(otpRes.message || 'Failed to send OTP.');
+                                    }
+                                },
+                                error: function (xhr) {
+                                    let message = 'Something went wrong.';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        message = xhr.responseJSON.message;
+                                    }
+                                    alert(message);
+                                }
+                            });
+
                         }
                     },
                     error: function (xhr) {
-                        let message = 'Something went wrong';
-
+                        let message = 'Invalid credentials.';
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             message = xhr.responseJSON.message;
                         }
-
-                        alert(message);
+                        // Stay on login form, show error
+                        toastr.error(message);
                     }
                 });
             });
@@ -765,11 +825,13 @@
 
                         if (res.success == true) {
                             otpVerified = true;
-                            $('#otpModal').modal('hide');
+
+                            // Remove modal dismiss guard before hiding
+                            $('#loginModal').off('hide.bs.modal');
                             $('#otpModal').addClass('d-none');
 
-                            // Step 3: Submit form AFTER success
-                            $('#loginForm').submit();
+                            // Follow server-dictated redirect — no guessing
+                            window.location.href = res.redirect;
                         } else {
                             $('#otp-error').text("Invalid OTP").show();
                         }
@@ -786,9 +848,64 @@
                 });
             });
 
+            // Step 3: Resend OTP
+            let resendTimer = null;
+
+            function startResendCooldown(seconds) {
+                const $resend = $('.resend');
+                $resend.css('pointer-events', 'none').css('opacity', '0.5');
+
+                let remaining = seconds;
+                clearInterval(resendTimer);
+
+                resendTimer = setInterval(function () {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(resendTimer);
+                        $resend.css('pointer-events', '').css('opacity', '1');
+                    }
+                }, 1000);
+            }
+
+            $('.resend').on('click', function () {
+                const email = $('#loginEmail').val();
+                const password = $('#loginPassword').val();
+
+                if (!email || !password) {
+                    alert('Session expired. Please refresh and try again.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/login_otp_get',
+                    method: 'POST',
+                    data: {
+                        email: email,
+                        password: password
+                    },
+                    success: function (res) {
+                        if (res.success == true) {
+                            // Clear existing OTP inputs
+                            $('#otp_digit1, #otp_digit2, #otp_digit3, #otp_digit4, #otp_digit5, #otp_digit6').val('');
+                            $('#verify-btn').prop('disabled', true);
+                            startOtpTimer(); // ← starts here, not on page load
+                            //startResendCooldown(30); // 30s cooldown before allowing another resend
+                        } else {
+                            alert(res.message || 'Unable to resend OTP. Please try again later.');
+                        }
+                    },
+                    error: function (xhr) {
+                        let message = 'Something went wrong';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        alert(message);
+                    }
+                });
+            });
+
         });
     </script>
-
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {

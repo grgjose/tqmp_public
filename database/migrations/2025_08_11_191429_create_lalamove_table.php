@@ -19,6 +19,7 @@ return new class extends Migration
             $table->json('quotation')->nullable();
             $table->json('order')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

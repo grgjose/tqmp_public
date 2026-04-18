@@ -23,7 +23,7 @@ class InquiryController extends Controller
         //$users = DB::table('users')->where('isDeleted', '=', false)->get();
 
         $inquiries = DB::table('inquiries')
-        ->where('isDeleted', '=', false)
+        ->where('deleted_at', '=', null)
         ->get();
 
         return view('dashboard.index', [
@@ -66,7 +66,7 @@ class InquiryController extends Controller
 
         $inquiries = DB::table('inquiries')
         ->where('id', '=', $id)
-        ->where('isDeleted', '=', false)
+        ->where('deleted_at', '=', null)
         ->get();
 
         return view('dashboard.modules.inquiries-view', [

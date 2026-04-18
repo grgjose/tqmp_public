@@ -14,9 +14,8 @@ return new class extends Migration
         Schema::create('product_variant_keys', function (Blueprint $table) {
             $table->id();
             $table->string('key');
-            $table->boolean('isDeleted')->default(false)->nullable();
             $table->timestamps();
-            
+            $table->softDeletes();     
         });
     }
 

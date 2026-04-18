@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->integer('product_id')->nullable();
             $table->string('filename')->nullable()->default('default.png');
-            $table->boolean('isDeleted')->nullable()->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
