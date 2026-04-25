@@ -7,7 +7,7 @@
     @include('plus.navbar')
     <section class="container">
         <div class="container-fluid py-4">
-            <div class="row">
+            <div class="row" style="margin-top: 50px;">
                 <div class="mx-auto">
                     <div class="card-header bg-white py-3">
                         <div class="d-flex justify-content-between align-items-center flex-wrap">
@@ -60,10 +60,10 @@
                                 <div class="modal fade" id="uploadConformeModal" tabindex="-1" aria-labelledby="uploadConformeModalLabel" aria-hidden="true">
                                     <div class="modal-dialog modal-dialog-centered">
                                         <div class="modal-content">
-                                            <form method="POST" action="/upload-conforme-sp/{{$quotation->id}}" enctype="multipart/form-data">
+                                            <form method="POST" action="/upload-conforme-user/{{$quotation->id}}" enctype="multipart/form-data">
                                                 @csrf
                                                 <div class="modal-header">
-                                                    <h5 class="modal-title" id="uploadConformeModalLabel">Upload Signed Conforme</h5>
+                                                    <h5 class="modal-title" id="uploadConformeModalLabel" style="color: black;">Upload Signed Conforme</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
                                                 <div class="modal-body">
@@ -73,6 +73,7 @@
                                                     <button type="button" class="card-button btn btn-primary" data-bs-dismiss="modal">Cancel</button>
                                                     <button type="submit" class="card-button btn btn-success">Upload</button>
                                                 </div>
+                                                <input type="hidden" name="toStatus" value="notToStatus">
                                             </form>
                                         </div>
                                     </div>
@@ -111,12 +112,30 @@
                                         Options <i class="fa-solid fa-caret-down ms-1"></i>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        @if($quotation->status != 'Cancelled' && $quotation->status != 'Approved')
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#cancelModal">Cancel</a></li>
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#approveModal">Approve</a></li>
+                                        @if($quotation->status != 'Cancelled')
+                                        <li><a class="dropdown-item" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#cancelModal">Cancel</a></li>
+                                        {{-- <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#approveModal">Approve</a></li> --}}
                                         @endif
-                                        @if($quotation->status != 'Cancelled' && $quotation->isAddedToCart == false && $quotation->isApprovedUser == true && $quotation->isApprovedSales == true)
-                                        <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#addToCartModal">Add to cart</a></li>
+
+                                        @if($quotation->status != 'Approved' && $quotation->status != 'Added to Cart' && $quotation->status != 'Expired')
+                                        <li><a class="dropdown-item" style="cursor: pointer;" href="#" data-bs-toggle="modal" data-bs-target="#uploadConformeModal">Upload Signed Conforme</a></li>
+                                        @endif
+
+                                        @php
+                                            $isExpired = $quotation->valid_until && \Carbon\Carbon::now()->greaterThan($quotation->valid_until);
+                                        @endphp
+                                        @if(
+                                            $quotation->status != 'Cancelled' &&
+                                            $quotation->status != 'Expired' &&
+                                            $quotation->isAddedToCart == false &&
+                                            $quotation->isApprovedSales == true &&
+                                            !$isExpired &&
+                                            !($quotation->valid_until && \Carbon\Carbon::now()->greaterThan($quotation->valid_until)) &&
+                                            $quotation->final_price > 0
+                                        )
+                                        <li><a class="dropdown-item" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#addToCartModal">Add to Cart</a></li>
+                                        @elseif($isExpired)
+                                        <li><a class="dropdown-item disabled text-muted">Add to Cart (Expired)</a></li>
                                         @endif
                                     </ul>
                                 </div>
@@ -124,37 +143,59 @@
                         </div>
                     </div>
                     <div>
-                        {{-- Status Messages --}}
-                        @if($quotation->filename_conforme == null || $quotation->filename_conforme == "")
-                        <label class="form-label fw-bold">Next Step:</label> 
-                        <span style="color: red;"> 
-                            Wait for the Sales Rep to Upload the Quotation Document for you to Sign and Upload Back the Signed Conforme.
-                        </span>
+                        {{-- Status Messages (Conforme-based flow) --}}
+                        @if($quotation->status == 'Expired')
+                            <label class="form-label fw-bold">Status:</label>
+                            <span style="color: red;">
+                                This quotation has <strong>expired</strong>. The valid period has elapsed and it can no longer be added to cart.
+                            </span>
+
+                        @elseif($quotation->status == 'Cancelled')
+                            <label class="form-label fw-bold">Status:</label>
+                            <span style="color: red;">This quotation has been cancelled.</span>
+
+                        @elseif($quotation->filename_conforme == null || $quotation->filename_conforme == "")
+                            <label class="form-label fw-bold">Next Step:</label>
+                            <span style="color: red;">
+                                Wait for the Sales Representative to upload the Quotation Document (Conforme). You will need to sign it and upload it back.
+                            </span>
+
                         @elseif($quotation->filename_conforme_signed == null || $quotation->filename_conforme_signed == "")
-                        <label class="form-label fw-bold">Next Step:</label> 
-                        <span style="color: red;"> 
-                            Please Upload Back the Signed Conforme (Quotation Document) to proceed with the Approval Process.
-                        </span>
-                         @elseif($quotation->filename_proof_of_payment == null || $quotation->filename_proof_of_payment == "")
-                        <label class="form-label fw-bold">Next Step:</label> 
-                        <span style="color: red;"> 
-                            Please Upload the Proof of Payment to proceed with the Approval Process.
-                        </span>
-                         @elseif($quotation->filename_ar == null || $quotation->filename_ar == "")
-                        <label class="form-label fw-bold">Next Step:</label> 
-                        <span style="color: red;"> 
-                            Wait for the Sales Rep to Upload the Acknowledgement Receipt for your reference.
-                        </span>
+                            <label class="form-label fw-bold">Next Step:</label>
+                            <span style="color: red;">
+                                The Sales Representative has uploaded your Quotation Document. Please <strong>download, sign, and upload back</strong> the Signed Conforme to continue.
+                            </span>
+
+                        @elseif($quotation->final_price == 0 || $quotation->valid_until == null)
+                            <label class="form-label fw-bold">Next Step:</label>
+                            <span style="color: orange;">
+                                Your signed conforme has been received. Waiting for the Sales Representative to set the <strong>Final Price</strong> and <strong>Valid Until</strong> date.
+                            </span>
+
+                        @elseif($quotation->isApprovedSales == false)
+                            <label class="form-label fw-bold">Next Step:</label>
+                            <span style="color: orange;">
+                                Waiting for the Sales Representative to review and <strong>approve</strong> the quotation.
+                            </span>
+
                         @elseif($quotation->isApprovedUser == false && $quotation->isApprovedSales == true)
-                        <label class="form-label fw-bold">Next Step:</label> 
-                        <span style="color: red;"> 
-                           Please Approve the Quotation to proceed with Add to Cart
-                        </span>
-                        @elseif($quotation->isApprovedUser == true && $quotation->isApprovedSales == false)
-                        <label class="form-label fw-bold">Next Step:</label> 
-                        <span style="color: red;"> 
-                           Pleae wait for the Sales Representative to Approve the Quotation to proceed with Add to Cart
-                        </span>
+                            <label class="form-label fw-bold">Next Step:</label>
+                            <span style="color: green;">
+                                The Sales Representative has approved this quotation. Please <strong>review and approve</strong> it to unlock Add to Cart.
+                                The final price is <strong>₱{{ number_format($quotation->final_price, 2) }}</strong> and it is valid until <strong>{{ \Carbon\Carbon::parse($quotation->valid_until)->format('F j, Y') }}</strong>.
+                            </span>
+
+                        @elseif($quotation->isApprovedUser == true && $quotation->isApprovedSales == true && $quotation->isAddedToCart == false)
+                            <label class="form-label fw-bold">Next Step:</label>
+                            <span style="color: green;">
+                                Your quotation is fully approved! You can now <strong>Add to Cart</strong>.
+                                Valid until <strong>{{ \Carbon\Carbon::parse($quotation->valid_until)->format('F j, Y') }}</strong>.
+                            </span>
+
+                        @elseif($quotation->isAddedToCart == true)
+                            <label class="form-label fw-bold">Status:</label>
+                            <span style="color: blue;">This quotation has been added to your cart.</span>
+
                         @endif
                     </div>
                     <div class="row mt-3">
@@ -165,7 +206,7 @@
                                         @csrf
                                         <input type="hidden" name="quotation_id" value="{{ $quotation->id }}" />
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="cancelModalLabel">Confirm Cancellation</h5>
+                                            <h5 class="modal-title" style="color: black;" id="cancelModalLabel">Confirm Cancellation</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">
@@ -207,7 +248,7 @@
                                         @csrf
                                         <input type="hidden" name="quotation_id" value="{{ $quotation->id }}" />
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="addToCartModalLabel">Confirm Add to Cart</h5>
+                                            <h5 class="modal-title" style="color: black;" id="addToCartModalLabel">Confirm Add to Cart</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <div class="modal-body">

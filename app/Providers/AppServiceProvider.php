@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\DB;
+use App\Models\Quotation;
+use App\Observers\QuotationObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -53,5 +55,7 @@ class AppServiceProvider extends ServiceProvider
                 ->with('notifications_new', $notifications_new)
                 ->with('notifications_old', $notifications_old);
         });
+
+        Quotation::observe(QuotationObserver::class);
     }
 }

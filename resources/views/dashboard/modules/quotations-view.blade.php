@@ -68,8 +68,8 @@
                     
                                 <button type="button"
                                         class="qv-btn qv-btn-reject"
-                                        onclick="showInputBox('Rejected', {{ $quotation->id }})">
-                                    <i class="fa-solid fa-circle-xmark"></i> Reject
+                                        onclick="showInputBox('Cancelled', {{ $quotation->id }})">
+                                <i class="fa-solid fa-circle-xmark"></i> Cancel
                                 </button>
                             @endif
                     
@@ -145,19 +145,23 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label">Valid Until</label>
-                                                @if($quotation->valid_until == null)
-                                                <input class="form-control-sm form-control" id="valid_until" type="date" placeholder="TBD">
-                                                @else
-                                                <input class="form-control-sm form-control" id="valid_until" type="date" placeholder="{{ $quotation->valid_until }}">
-                                                @endif
+                                                <input class="form-control-sm form-control"
+                                                    id="valid_until"
+                                                    type="date"
+                                                    value="{{ $quotation->valid_until ? \Carbon\Carbon::parse($quotation->valid_until)->format('Y-m-d') : '' }}"
+                                                    placeholder="TBD"
+                                                    data-quotation-id="{{ $quotation->id }}">
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label" style="color: red;">Final Price</label>
-                                                @if($quotation->final_price == 0)
-                                                <input class="form-control-sm form-control" id="final_price" type="number" placeholder="TBD">
-                                                @else
-                                                <input class="form-control-sm form-control" id="final_price" type="number" placeholder="{{ $quotation->final_price }}">
-                                                @endif
+                                                <input class="form-control-sm form-control"
+                                                    id="final_price"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    value="{{ $quotation->final_price > 0 ? $quotation->final_price : '' }}"
+                                                    placeholder="TBD"
+                                                    data-quotation-id="{{ $quotation->id }}">
                                             </div>
                                         </div>
                                         @if($quotation->quotation_type == 'bullet')

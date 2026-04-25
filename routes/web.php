@@ -80,6 +80,8 @@ Route::get('/unsuccessful', [HomeController::class, 'unsuccessful']);
 */
 Route::middleware([AllUserAuth::class, CheckNotification::class])->group(function () {
 
+    Route::get('/order-download-ar/{id}', [OrderController::class, 'downloadAR']);
+
     // API Calls
     Route::post('/lalamoveGetQuotation', [OrderController::class, 'lalamoveGetQuotation'])->name('lalamove.getQuotation');
     Route::get('/lalamoveGetQuotation', [OrderController::class, 'lalamoveGetQuotation']);
@@ -153,11 +155,11 @@ Route::middleware([UserAuth::class, CheckNotification::class])->group(function (
     Route::post('/quotation-to-cart', [QuotationController::class, 'quotationToCart']);
 
     // Cart & Orders (with CheckNotification)
-    Route::get('/add-to-cart/{id}', [ProductController::class, 'before_add_to_cart'])->middleware(CheckNotification::class);
-    Route::post('/add-to-cart/{id}', [ProductController::class, 'after_add_to_cart'])->middleware(CheckNotification::class);
-    Route::get('/cart', [ProductController::class, 'cart'])->middleware(CheckNotification::class);
-    Route::get('/order-status', [HomeController::class, 'OrderStatus'])->middleware(CheckNotification::class);
-    Route::get('/order-status/{reference}', [ProductController::class, 'order_status'])->middleware(CheckNotification::class);
+    Route::get('/add-to-cart/{id}', [ProductController::class, 'before_add_to_cart']);
+    Route::post('/add-to-cart/{id}', [ProductController::class, 'after_add_to_cart']);
+    Route::get('/cart', [ProductController::class, 'cart']);
+    Route::get('/order-status', [HomeController::class, 'OrderStatus']);
+    Route::get('/order-status/{reference}', [ProductController::class, 'order_status']);
     Route::post('/remove-cart-item/{id}', [ProductController::class, 'remove']);
     Route::get('/import', [ProductController::class, 'import']);
     Route::get('/set-shipping', [OrderController::class, 'setShipping']);
@@ -222,6 +224,7 @@ Route::middleware([SalesAuth::class, CheckNotification::class])->group(function 
     Route::post('/quotation/update-status', [QuotationController::class, 'updateStatus'])->name('quotation.updateStatus');
     Route::post('/quotation-status-change/{id}', [QuotationController::class, 'changeStatus']);
     Route::post('/quotation/update-status-sales/{id}', [QuotationController::class, 'updateStatusSales']);
+    Route::post('/quotation/update-field', [QuotationController::class, 'updateField'])->name('quotation.updateField');
 
     // Consumers & Approvals
     Route::get('/consumers', [UserController::class, 'consumers']);

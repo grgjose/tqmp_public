@@ -693,6 +693,32 @@ class OrderController extends Controller
 
     }
 
+    /**
+     * Download Acknowledgement Receipt for an Order (user-facing)
+     */
+    public function downloadAR($id)
+    {
+        /** @var \Illuminate\Auth\SessionGuard $auth */
+        $auth = auth();
+        $my_user = $auth->user();
+
+        $order = \App\Models\Order::where('id', $id)
+                                ->where('customer_id', $my_user->id)
+                                ->firstOrFail();
+
+        if (!$order->proof_of_payment) {
+            return redirect()->back()->with('error_msg', 'No Acknowledgement Receipt available yet.');
+        }
+
+        $filePath = storage_path('app/public/proof/' . $order->proof_of_payment);
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error_msg', 'File not found.');
+        }
+
+        return response()->download($filePath, 'acknowledgement_receipt_' . $order->reference_num . '.pdf');
+    }
+
     public function placeOrder(Request $request)
     {
 

@@ -62,10 +62,19 @@
                                         </tr>
                                     @endif
                                     @foreach ($carts as $cart)
-                                        <tr>
+                                        @php
+                                            $isExpiredQuotation = false;
+                                            if ($cart->quotation_id) {
+                                                $quotation = \App\Models\Quotation::find($cart->quotation_id);
+                                                if ($quotation && $quotation->valid_until && \Carbon\Carbon::now()->greaterThan($quotation->valid_until) || ($quotation->status == 'Expired' || $quotation->status == 'Cancelled') ) {
+                                                    $isExpiredQuotation = true;
+                                                }
+                                            }
+                                        @endphp
+                                        <tr class="{{ $isExpiredQuotation ? 'table-danger opacity-75' : '' }}">
                                             <td>
                                                 <input type="checkbox" name="checkboxes[]" value="{{ $cart->id }}"
-                                                    class="form-check-input" checked>
+                                                    class="form-check-input" {{ $isExpiredQuotation ? 'disabled' : 'checked' }}>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
@@ -148,7 +157,7 @@
                                             @elseif($cart->quotation_id != null)
                                                 @foreach ($quotations as $quote)
                                                     @if ($quote->id == $cart->quotation_id)
-                                                        <td class="item_prices">₱{{ $quote->final_price }}</td>
+                                                        <td class="item_prices">₱{{ number_format($quote->final_price, 2) }}</td>
                                                         <td class="prices">
                                                             ₱{{ $quote->final_price * $cart->quantity }}</td>
                                                         <td class="discounted_prices">₱0.00</td>
@@ -160,6 +169,13 @@
                                                 <span class="btn-close" style="cursor: pointer;"
                                                     onclick="removeItem(this, {{ $cart->id }})">&times;</span>
                                             </td>
+
+                                            {{-- Add this warning badge if expired --}}
+                                            @if($isExpiredQuotation)
+                                                <td colspan="...">
+                                                    <span class="badge bg-danger">Quotation Expired — Remove this item to proceed</span>
+                                                </td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -181,9 +197,17 @@
                                         <p class="mt-2 mb-0 text-success fw-semibold">Free</p>
                                     </label>
                                 </div>
-                                <div
-                                    class="border rounded-4 p-4 shadow-sm d-flex align-items-center justify-content-between">
+
+                                <div class="border rounded-4 p-4 shadow-sm d-flex align-items-center justify-content-between">
                                     <div class="d-flex align-items-center flex-grow-1">
+                                        {{-- Pass whether user has a default shipping address --}}
+                                        @php
+                                            $hasShipping = \App\Models\Shipping::where('user_id', $my_user->id)
+                                                                            ->where('isDefault', true)
+                                                                            ->exists();
+                                        @endphp
+                                        {{-- Add a hidden field to tell JS --}}
+                                        <input type="hidden" id="hasDefaultShipping" value="{{ $hasShipping ? '1' : '0' }}">
                                         <input class="form-check-input me-3 mt-0" type="radio" name="delivery"
                                             value="delivery" id="option2" style="width:25px;height:25px;">
 
@@ -208,7 +232,6 @@
                                     </div>
                                     <a href="/set-shipping" class="btn btn-primary ms-3">Set Address</a>
                                 </div>
-
                             </div>
                         </div>
                         <h5 class="fw-bold mt-4">Payment Methods</h5>
@@ -276,8 +299,13 @@
                 <hr>
                 <h6 class="coupon-text">Apply Coupon to get discount!</h6>
                 <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Coupon code">
-                    <button class="card-button btn btn-danger">Apply Code</button>
+                    {{-- Add inside the <form> tag that submits to checkout --}}
+                    <input type="hidden" id="couponCodeHidden" name="coupon_code" value="">
+                    <input type="text" class="form-control" id="couponCodeInput" placeholder="Coupon code">
+                    <button type="button" class="card-button btn btn-primary" onclick="applyCoupon()">Apply Code</button>
+                </div>
+                <div id="couponError" class="text-danger small mt-1" style="display:none;">
+                    Coupon is Expired or Not Available.
                 </div>
                 <button type="submit" id="checkoutButton" class="card-button btn btn-danger w-100">Checkout</button>
             </div>

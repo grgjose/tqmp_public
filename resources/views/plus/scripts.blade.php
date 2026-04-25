@@ -513,6 +513,17 @@
             const checkoutButton = $('#checkoutButton');
             const deliveryFeePrice = $('#deliveryFeePrice');
 
+            document.querySelectorAll('input[name="delivery"]').forEach(function(radio) {
+                radio.addEventListener('change', function () {
+                    const hasShipping = document.getElementById('hasDefaultShipping').value === '1';
+                    if (this.value === 'delivery' && !hasShipping) {
+                        alert('Please set a default shipping address first. Go to Profile > Shipping to add one.');
+                        // Revert to pickup
+                        document.querySelector('input[name="delivery"][value="pickup"]').checked = true;
+                    }
+                });
+            });
+
             checkoutButton.prop('disabled', true);
 
             function parsePesoAmount(text) {
@@ -772,7 +783,7 @@
                 $('#loginModalBody').addClass('d-none');
                 $('#otpModal').addClass('d-none');
                 $('#forgotPasswordBody').removeClass('d-none');
-;
+                
             });
 
             // Step 1: Click Login → Call OTP_Get + show modal
@@ -960,4 +971,39 @@
 
             });
         }
+    </script>
+
+
+
+    <script>
+        function applyCoupon() {
+            const input = document.getElementById('couponCodeInput');
+            const hidden = document.getElementById('couponCodeHidden');
+            const errorDiv = document.getElementById('couponError');
+            
+            if (input.value.trim() !== '') {
+                hidden.value = input.value.trim(); // sync to hidden field
+                errorDiv.style.display = 'block';
+            } else {
+                hidden.value = '';
+                errorDiv.style.display = 'none';
+            }
+        }
+        
+
+        // Prevent checkout if coupon code is entered
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkoutForm = document.getElementById('checkoutForm'); // adjust ID if different
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', function (e) {
+                    const couponInput = document.getElementById('couponCodeInput');
+                    if (couponInput && couponInput.value.trim() !== '') {
+                        e.preventDefault();
+                        document.getElementById('couponError').style.display = 'block';
+                        couponInput.focus();
+                        return false;
+                    }
+                });
+            }
+        });
     </script>

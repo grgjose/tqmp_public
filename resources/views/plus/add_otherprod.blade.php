@@ -45,7 +45,7 @@
                   @foreach($products as $product)
                     @if($product->sub_category_id == $sub_category->id)
                       <div class="col-6 col-md-4 col-lg-3 d-flex align-items-stretch product-item"
-                          data-name="{{ strtolower($product->display_name) }}"
+                          data-name="{{ strtolower($product->name) }}"
                           data-category="{{ strtolower($sub_category->category) }}">
                         <div class="card border-1 d-flex flex-column w-100">
                           <img src="{{ asset('storage/all-items/'.$product->image) }}"

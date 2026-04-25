@@ -25,7 +25,7 @@ class QuotationController extends Controller
         $my_user = $auth->user();
 
         if ($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
-        if ($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
+        if ($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $quotations = DB::table('quotations')
         ->where('deleted_at', '=', null)
@@ -198,7 +198,7 @@ class QuotationController extends Controller
         $my_user = $auth->user();
 
         if ($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
-        if ($my_user->usertype > 1) return redirect('/home')->with('error_msg', 'Invalid Access!');
+        if ($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
         $quotations = DB::table('quotations')
         ->where('id', '=', $id)
@@ -413,6 +413,29 @@ class QuotationController extends Controller
         return redirect('/quotations')->with('success_msg', 'Status Changed');
     }
 
+    /**
+     * AJAX: Update a single field (valid_until or final_price) on blur
+     */
+    public function updateField(Request $request)
+    {
+        $request->validate([
+            'quotation_id' => 'required|integer|exists:quotations,id',
+            'field'        => 'required|in:valid_until,final_price',
+            'value'        => 'required',
+        ]);
+
+        $quotation = Quotation::find($request->quotation_id);
+
+        if ($request->field === 'valid_until') {
+            $quotation->valid_until = \Carbon\Carbon::parse($request->value);
+        } elseif ($request->field === 'final_price') {
+            $quotation->final_price = (float) $request->value;
+        }
+
+        $quotation->save();
+
+        return response()->json(['success' => true]);
+    }
 
     /**
      * Update Status
@@ -450,12 +473,12 @@ class QuotationController extends Controller
         ]);
 
         $quotation = Quotation::find($request->quotation_id);
-        if($request->status == 'Approved'){
+        if ($request->status === 'Approved') {
             $quotation->isApprovedSales = true;
         } else {
             $quotation->isApprovedSales = false;
         }
-        $quotation->isApprovedSales = true;
+        // Removed the unconditional override line (was P-029 bug)
         $quotation->status = $request->status;
         $quotation->save();
 
@@ -481,7 +504,10 @@ class QuotationController extends Controller
 
         $id = $request->input('quotation_id');
 
-        $quotation = Quotation::find($id);
+        // Ownership check
+        $quotation = Quotation::where('id', $id)
+                            ->where('user_id', $my_user->id)
+                            ->firstOrFail();
         $quotation->status = 'Cancelled';
         $quotation->save();
 
@@ -501,7 +527,7 @@ class QuotationController extends Controller
 
         $quotation = Quotation::find($id);
         $quotation->isApprovedUser = true;
-        $quotation->status = 'Approve';
+        $quotation->status = 'Approved';
         $quotation->save();
 
         return redirect('/profile')->with('success_msg', $quotation->reference . ' Quotation Approved.');
@@ -518,8 +544,25 @@ class QuotationController extends Controller
 
         $id = $request->input('quotation_id');
 
-        $quotation = Quotation::find($id);
+        // Ownership check (P-028 fix)
+        $quotation = Quotation::where('id', $id)
+                            ->where('user_id', $my_user->id)
+                            ->firstOrFail();
+
+        // Must be fully approved
+        if (!$quotation->isApprovedSales) {
+            return redirect('/profile')->with('error_msg', 'Quotation is not yet approved.');
+        }
+
+        // Must not be expired
+        if ($quotation->valid_until && \Carbon\Carbon::now()->greaterThan($quotation->valid_until)) {
+            $quotation->status = 'Expired';
+            $quotation->save();
+            return redirect('/profile')->with('error_msg', 'This quotation has expired and cannot be added to cart.');
+        }
+
         $quotation->status = 'Added to Cart';
+        $quotation->isAddedToCart = true;
         $quotation->save();
 
         $findQuotation = DB::table('carts')->where('quotation_id', '=', $id)->get();
@@ -533,7 +576,7 @@ class QuotationController extends Controller
             $cart->save();
         }
 
-        return redirect('/cart')->with('success_msg', $quotation->reference . ' Quotation Added to Cart.');
+        return redirect('/cart')->with('success_msg', $quotation->reference . 'Quotation Added to Cart.');
     }
 
     /**

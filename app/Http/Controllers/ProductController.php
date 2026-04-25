@@ -505,6 +505,38 @@ class ProductController extends Controller
             'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
         ]);
 
+        // ── GATE 1: Coupon code must not be entered ──────────────────────────────
+        if ($request->filled('coupon_code')) {
+            return redirect('/cart')->with('error_msg', 'Coupon is Expired or Not Available.');
+        }
+
+        // ── GATE 2: Delivery requires a default shipping address ─────────────────
+        if ($validated['delivery'] === 'delivery') {
+            $hasShipping = \App\Models\Shipping::where('user_id', $my_user->id)
+                                            ->where('isDefault', true)
+                                            ->exists();
+            if (!$hasShipping) {
+                return redirect('/cart')->with('error_msg', 'Please set a default shipping address before selecting Delivery.');
+            }
+        }
+
+        // ── GATE 3: Check for expired quotation items in the selected cart rows ──
+        foreach ($validated['checkboxes'] as $cartId) {
+            $cart = \App\Models\Cart::find($cartId);
+            if ($cart && $cart->quotation_id) {
+                $quotation = \App\Models\Quotation::find($cart->quotation_id);
+                if ($quotation && $quotation->valid_until && \Carbon\Carbon::now()->greaterThan($quotation->valid_until)) {
+                    // Mark expired + delete cart row
+                    \App\Models\Quotation::withoutEvents(function () use ($quotation) {
+                        $quotation->status = 'Expired';
+                        $quotation->save();
+                    });
+                    $cart->delete();
+                    return redirect('/cart')->with('error_msg', 'One or more quotation items have expired and have been removed. Please review your cart.');
+                }
+            }
+        }
+
         $filename = null;
         
         // Handle file upload
@@ -590,7 +622,7 @@ class ProductController extends Controller
 
         Mail::to($mailTo)->cc($mailCc)->send(new OrderPlacedMail($data));
 
-        return redirect('/order-status')->with('success_msg', 'Checkout Successful!');
+        return redirect('/order-status')->with('success_msg', 'Checkout Successful! Here is your order status.');
     }
 
     /**
@@ -609,15 +641,16 @@ class ProductController extends Controller
         // ->get();
 
         $orders = DB::table('orders')
-        ->join('products', 'orders.product_id', '=', 'products.id')
-        ->leftJoin('quotations', 'orders.quotation_id', '=', 'quotations.id')
-        ->select(
-            'orders.*',
-            'products.name as p_name',
-            'quotations.reference as q_name'
-        )
-        ->where('orders.reference_num', '=', $reference)
-        ->get();
+            ->leftJoin('products', 'products.id', '=', 'orders.product_id')
+            ->leftJoin('quotations', 'quotations.id', '=', 'orders.quotation_id')
+            ->select(
+                'orders.*',
+                'products.name as product_name',
+                'quotations.reference as quotation_reference'
+            )
+            ->where('orders.reference_num', '=', $reference)
+            ->where('orders.customer_id', '=', $my_user->id)  // security: only show own orders
+            ->get();
 
         $settings_nav = DB::table('settings')->where('key', 'like', 'NAVBAR_%')->pluck('value', 'key');
 

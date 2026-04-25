@@ -400,267 +400,267 @@
 
     
     @if($title == "Orders")
-    <script>
-        function showLoader() {
-            document.getElementById('loadingOverlay').style.display = 'flex';
-        }
-
-        function hideLoader() {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
-
-        function changeStatus(id, status) {
-            $('#changeStatusForm').attr('action', '/order-status-change/' + id);
-            $('#changeStatusInput').val(status);
-            $('#changeStatusForm').submit();
-            $('#statusButton').html(status);
-        }
-
-        async function getQuotationTotal(apiUrl) {
-            try {
-                // Call the API with GET method
-                const response = await fetch(apiUrl, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "XCSRFToken": "{{ csrf_token() }}"
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                // Parse JSON response
-                const result = await response.json();
-
-                // Ensure structure exists
-                if (result?.data?.priceBreakdown?.total) {
-                    const total = parseFloat(result.data.priceBreakdown.total);
-                    console.log("Quotation Total:", total);
-                    return total;
-                } else {
-                    throw new Error("priceBreakdown.total not found in response");
-                }
-
-            } catch (error) {
-                console.error("Error fetching quotation:", error.message);
-                return null;
-            }
-        }
-
-        function getQuotation(orderId) {
-
-            var statusButtonVal = $('#statusButton' + orderId).html();
-            if (statusButtonVal.trim() != "Awaiting Shipment") {
-                toastr.options.preventDuplicates = true;
-                toastr.error("Not ready for Shipment");
-                return 0;
+        <script>
+            function showLoader() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
             }
 
-            showLoader();
+            function hideLoader() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
 
-            $('#order_id').val(orderId);
+            function changeStatus(id, status) {
+                $('#changeStatusForm').attr('action', '/order-status-change/' + id);
+                $('#changeStatusInput').val(status);
+                $('#changeStatusForm').submit();
+                $('#statusButton').html(status);
+            }
 
-            // Do your real logic here, like fetch order details
-            getQuotationTotal('/order-get-quotation/' + orderId)
-                .then(total => {
-                    if (total !== null) {
-                        // Update the modal content with the fetched total
-                        document.querySelector('#lalamoveCost').innerHTML = `The estimated delivery cost is <strong>₱${total.toFixed(2)}</strong>.`;
-                        hideLoader(); // hide the loading spinner
+            async function getQuotationTotal(apiUrl) {
+                try {
+                    // Call the API with GET method
+                    const response = await fetch(apiUrl, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "XCSRFToken": "{{ csrf_token() }}"
+                        }
+                    });
 
-                        $('#vehicleSelect').val('SEDAN');
-                        // Now show the modal
-                        let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
-                        myModal.show();
-                    } else {
-                        // Handle error case
-                        document.querySelector('#lalamoveCost').innerHTML = `Error fetching quotation. Please try again later.`;
-                        hideLoader(); // hide the loading spinner
-
-                        $('#vehicleSelect').val('SEDAN');
-                        // Now show the modal
-                        let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
-                        myModal.show();
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                });
 
+                    // Parse JSON response
+                    const result = await response.json();
 
-            // Simulate async delay (or use fetch/axios here)
-            // setTimeout(() => {
-
-            //     hideLoader(); // hide the loading spinner
-
-            //     // Now show the modal
-            //     let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
-            //     myModal.show();
-
-
-            // }, 1000); // simulate 1-second delay
-        }
-
-        function getQuotationChangeVehicle(serviceType) {
-            showLoader();
-
-            var orderId = $('#order_id').val();
-            var quantity = $('#quantity' + orderId).html();
-
-            // Do your real logic here, like fetch order details
-            getQuotationTotal('/order-get-quotation/' + orderId + '/' + serviceType + '/' + quantity)
-                .then(total => {
-                    if (total !== null) {
-                        // Update the modal content with the fetched total
-                        document.querySelector('#lalamoveCost').innerHTML = `The estimated delivery cost is <strong>₱${total.toFixed(2)}</strong>.`;
-                        hideLoader(); // hide the loading spinner
+                    // Ensure structure exists
+                    if (result?.data?.priceBreakdown?.total) {
+                        const total = parseFloat(result.data.priceBreakdown.total);
+                        console.log("Quotation Total:", total);
+                        return total;
                     } else {
-                        // Handle error case
-                        document.querySelector('#lalamoveCost').innerHTML = `Error fetching quotation. Please try again later.`;
-                        hideLoader(); // hide the loading spinner
+                        throw new Error("priceBreakdown.total not found in response");
                     }
-                });
 
-
-            // Simulate async delay (or use fetch/axios here)
-            // setTimeout(() => {
-
-            //     hideLoader(); // hide the loading spinner
-
-            //     // Now show the modal
-            //     // let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
-            //     // myModal.show();
-
-
-            // }, 1000); // simulate 1-second delay
-        }
-
-        $(document).ready(function() {
-            $('#vehicleSelect').on('change', function() {
-                const selectedVehicle = $(this).val();
-
-                if (selectedVehicle) {
-                    // Call your custom function and pass the selected vehicle
-                    getQuotationChangeVehicle(selectedVehicle);
+                } catch (error) {
+                    console.error("Error fetching quotation:", error.message);
+                    return null;
                 }
+            }
+
+            function getQuotation(orderId) {
+
+                var statusButtonVal = $('#statusButton' + orderId).html();
+                if (statusButtonVal.trim() != "Awaiting Shipment") {
+                    toastr.options.preventDuplicates = true;
+                    toastr.error("Not ready for Shipment");
+                    return 0;
+                }
+
+                showLoader();
+
+                $('#order_id').val(orderId);
+
+                // Do your real logic here, like fetch order details
+                getQuotationTotal('/order-get-quotation/' + orderId)
+                    .then(total => {
+                        if (total !== null) {
+                            // Update the modal content with the fetched total
+                            document.querySelector('#lalamoveCost').innerHTML = `The estimated delivery cost is <strong>₱${total.toFixed(2)}</strong>.`;
+                            hideLoader(); // hide the loading spinner
+
+                            $('#vehicleSelect').val('SEDAN');
+                            // Now show the modal
+                            let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
+                            myModal.show();
+                        } else {
+                            // Handle error case
+                            document.querySelector('#lalamoveCost').innerHTML = `Error fetching quotation. Please try again later.`;
+                            hideLoader(); // hide the loading spinner
+
+                            $('#vehicleSelect').val('SEDAN');
+                            // Now show the modal
+                            let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
+                            myModal.show();
+                        }
+                    });
+
+
+                // Simulate async delay (or use fetch/axios here)
+                // setTimeout(() => {
+
+                //     hideLoader(); // hide the loading spinner
+
+                //     // Now show the modal
+                //     let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
+                //     myModal.show();
+
+
+                // }, 1000); // simulate 1-second delay
+            }
+
+            function getQuotationChangeVehicle(serviceType) {
+                showLoader();
+
+                var orderId = $('#order_id').val();
+                var quantity = $('#quantity' + orderId).html();
+
+                // Do your real logic here, like fetch order details
+                getQuotationTotal('/order-get-quotation/' + orderId + '/' + serviceType + '/' + quantity)
+                    .then(total => {
+                        if (total !== null) {
+                            // Update the modal content with the fetched total
+                            document.querySelector('#lalamoveCost').innerHTML = `The estimated delivery cost is <strong>₱${total.toFixed(2)}</strong>.`;
+                            hideLoader(); // hide the loading spinner
+                        } else {
+                            // Handle error case
+                            document.querySelector('#lalamoveCost').innerHTML = `Error fetching quotation. Please try again later.`;
+                            hideLoader(); // hide the loading spinner
+                        }
+                    });
+
+
+                // Simulate async delay (or use fetch/axios here)
+                // setTimeout(() => {
+
+                //     hideLoader(); // hide the loading spinner
+
+                //     // Now show the modal
+                //     // let myModal = new bootstrap.Modal(document.getElementById('quotationModal'));
+                //     // myModal.show();
+
+
+                // }, 1000); // simulate 1-second delay
+            }
+
+            $(document).ready(function() {
+                $('#vehicleSelect').on('change', function() {
+                    const selectedVehicle = $(this).val();
+
+                    if (selectedVehicle) {
+                        // Call your custom function and pass the selected vehicle
+                        getQuotationChangeVehicle(selectedVehicle);
+                    }
+                });
             });
-        });
 
-        async function getOrderDetailsSummary(apiUrl) {
-            try {
-                // Call the API with GET method
-                const response = await fetch(apiUrl, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "XCSRFToken": "{{ csrf_token() }}"
+            async function getOrderDetailsSummary(apiUrl) {
+                try {
+                    // Call the API with GET method
+                    const response = await fetch(apiUrl, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "XCSRFToken": "{{ csrf_token() }}"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                    // Parse JSON response
+                    const result = await response.json();
 
-                // Parse JSON response
-                const result = await response.json();
-
-                // Ensure structure exists
-                if (result?.data?.status) {
-                    console.log("Order Status:" + result.data.status);
-                    return result.data.status + "/////" + result.data.shareLink + "/////" + result.data.driverId;
-                } else {
-                    throw new Error(result.error);
-                }
-
-            } catch (error) {
-                console.error("Error fetching order details:", error.message);
-                return null;
-            }
-        }
-
-        async function getDriverDetailsSummary(apiUrl) {
-            try {
-                // Call the API with GET method
-                const response = await fetch(apiUrl, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "XCSRFToken": "{{ csrf_token() }}"
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                // Parse JSON response
-                const result = await response.json();
-
-                // Ensure structure exists
-                if (result?.data?.name) {
-                    console.log("Driver Details:" + result.data.name);
-                    return result.data.name + "/////" + result.data.phone + "/////" + result.data.plateNumber;
-                } else {
-                    throw new Error(result.error);
-                }
-
-            } catch (error) {
-                console.error("Error fetching driver details:", error.message);
-                return null;
-            }
-        }
-
-        function getOrderDetails(orderId) {
-
-            showLoader();
-
-            getOrderDetailsSummary('/order-get-order-details/' + orderId)
-                .then(tempStatus => {
-                    var status = tempStatus.split('/////')[0];
-                    var sharelink = tempStatus.split('/////')[1];
-                    var driverId = tempStatus.split('/////')[2];
-
-                    $('#status').html('Status: ' + status);
-                    $('#link').html('Share Link: <a target="_blank" href="' + sharelink + '"> Click this to track order </a>');
-
-                    if (driverId == "") {
-                        $('#driverName').html('Driver Name: No Assigned Driver Yet');
-                        $('#driverContact').html('Driver Contact: -');
-                        $('#driverPlateNumber').html('Driver Plate Number: -');
-
-                        hideLoader();
-
-                        let myModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-                        myModal.show();
-
+                    // Ensure structure exists
+                    if (result?.data?.status) {
+                        console.log("Order Status:" + result.data.status);
+                        return result.data.status + "/////" + result.data.shareLink + "/////" + result.data.driverId;
                     } else {
-                        getDriverDetailsSummary('order-get-driver-details/' + orderId + '/' + driverId)
-                            .then(details => {
-                                var name = details.split('/////')[0];
-                                var contact = details.split('/////')[1];
-                                var plate_num = details.split('/////')[2];
-
-                                $('#driverName').html('Driver Name: ' + name);
-                                $('#driverContact').html('Driver Contact: ' + contact);
-                                $('#driverPlateNumber').html('Driver Plate Number: ' + plate_num);
-
-                                hideLoader();
-                                let myModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-                                myModal.show();
-
-                            });
+                        throw new Error(result.error);
                     }
 
+                } catch (error) {
+                    console.error("Error fetching order details:", error.message);
+                    return null;
+                }
+            }
+
+            async function getDriverDetailsSummary(apiUrl) {
+                try {
+                    // Call the API with GET method
+                    const response = await fetch(apiUrl, {
+                        method: "GET",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "XCSRFToken": "{{ csrf_token() }}"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    // Parse JSON response
+                    const result = await response.json();
+
+                    // Ensure structure exists
+                    if (result?.data?.name) {
+                        console.log("Driver Details:" + result.data.name);
+                        return result.data.name + "/////" + result.data.phone + "/////" + result.data.plateNumber;
+                    } else {
+                        throw new Error(result.error);
+                    }
+
+                } catch (error) {
+                    console.error("Error fetching driver details:", error.message);
+                    return null;
+                }
+            }
+
+            function getOrderDetails(orderId) {
+
+                showLoader();
+
+                getOrderDetailsSummary('/order-get-order-details/' + orderId)
+                    .then(tempStatus => {
+                        var status = tempStatus.split('/////')[0];
+                        var sharelink = tempStatus.split('/////')[1];
+                        var driverId = tempStatus.split('/////')[2];
+
+                        $('#status').html('Status: ' + status);
+                        $('#link').html('Share Link: <a target="_blank" href="' + sharelink + '"> Click this to track order </a>');
+
+                        if (driverId == "") {
+                            $('#driverName').html('Driver Name: No Assigned Driver Yet');
+                            $('#driverContact').html('Driver Contact: -');
+                            $('#driverPlateNumber').html('Driver Plate Number: -');
+
+                            hideLoader();
+
+                            let myModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                            myModal.show();
+
+                        } else {
+                            getDriverDetailsSummary('order-get-driver-details/' + orderId + '/' + driverId)
+                                .then(details => {
+                                    var name = details.split('/////')[0];
+                                    var contact = details.split('/////')[1];
+                                    var plate_num = details.split('/////')[2];
+
+                                    $('#driverName').html('Driver Name: ' + name);
+                                    $('#driverContact').html('Driver Contact: ' + contact);
+                                    $('#driverPlateNumber').html('Driver Plate Number: ' + plate_num);
+
+                                    hideLoader();
+                                    let myModal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                                    myModal.show();
+
+                                });
+                        }
+
+                    });
+
+            }
+
+            function cancelOrder(orderId) {
+                $('#confirmCancelOrder').off('click').on('click', function() {
+                    console.log("Cancelling order for order ID:", orderId);
+                    $('#cancelOrderModal').modal('hide');
                 });
-
-        }
-
-        function cancelOrder(orderId) {
-            $('#confirmCancelOrder').off('click').on('click', function() {
-                console.log("Cancelling order for order ID:", orderId);
-                $('#cancelOrderModal').modal('hide');
-            });
-        }
-    </script>
+            }
+        </script>
     @endif
 
     <script>
@@ -713,6 +713,59 @@
         new DataTable('#tbl_values');
         new DataTable('#tbl_mappings');
         new DataTable('#tbl_auditTrail');
+    </script>
+    <script>
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        });
+
+
+        function autosaveField(selector, fieldName) {
+            
+            var $input = $(selector);
+            var quotationId = $input.data('quotation-id');
+            var value = $.trim($input.val());
+
+            if (value === '') return;
+
+            $.ajax({
+                url: '/quotation/update-field',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    quotation_id: quotationId,
+                    field: fieldName,
+                    value: value
+                }),
+                success: function (data) {
+                    if (data.success) {
+                        $input.removeClass('is-invalid').addClass('is-valid');
+                        setTimeout(function () {
+                            $input.removeClass('is-valid');
+                        }, 2000);
+                    } else {
+                        $input.addClass('is-invalid');
+                    }
+                },
+                error: function (xhr) {
+                    $input.addClass('is-invalid');
+                    var message = 'Something went wrong.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    alert('Error saving "' + fieldName + '" [HTTP ' + xhr.status + ']: ' + message);
+                }
+            });
+          
+        }
+
+        // Fallback if .load() causes ready() to miss
+        $(document).on('blur', '#valid_until', function () { autosaveField('#valid_until', 'valid_until'); });
+        $(document).on('blur', '#final_price', function () { autosaveField('#final_price', 'final_price'); });
+
     </script>
 </body>
 

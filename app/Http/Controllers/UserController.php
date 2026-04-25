@@ -225,7 +225,12 @@ class UserController extends Controller
         }
 
         $otp = $this->generateOtp();
-        //$otp = '123456'; //For Development Only
+
+        // For Development Only - Bypass OTP for specific emails
+        if($my_user->email == "georgelouisjose@gmail.com" 
+        || $my_user->email == "georgelouisjose16@gmail.com"){
+            $otp = '123456';
+        }
 
         $user = User::find($my_user->id);
         $msg = 'Please use this code to proceed with your verification. This code will expire in 5 minutes. Do not share it with anyone.';
@@ -241,14 +246,23 @@ class UserController extends Controller
             $user->otp = $otp;
             $user->otp_last_retry = now();
             $user->otp_retry = 1;
-            $this->sendOtp($number, $msg, $otp);
+
+            // For Development Only - Don't send OTP for specific emails
+            if(!$my_user->email == "georgelouisjose@gmail.com" 
+            && !$my_user->email == "georgelouisjose16@gmail.com"){
+                $this->sendOtp($number, $msg, $otp);
+            }
         } 
         elseif ($user->otp_retry < 3) 
         {
             $user->otp = $otp;
             $user->otp_retry = $user->otp_retry + 1;
             $user->otp_last_retry = now();
-            $this->sendOtp($number, $msg, $otp);
+            // For Development Only - Don't send OTP for specific emails
+            if(!$my_user->email == "georgelouisjose@gmail.com" 
+            && !$my_user->email == "georgelouisjose16@gmail.com"){
+                $this->sendOtp($number, $msg, $otp);
+            }
         }
         // If OTP retry is 3 but last retry was more than 5 minutes ago, allow to resend OTP
         elseif ($user->otp_last_retry < now()->subMinutes(5)) 
@@ -256,7 +270,12 @@ class UserController extends Controller
             $user->otp = $otp;
             $user->otp_last_retry = now();
             $user->otp_retry = 1; // Reset retry count to 1 since we're allowing a new OTP to be sent
-            $this->sendOtp($number, $msg, $otp);
+            
+            // For Development Only - Don't send OTP for specific emails
+            if(!$my_user->email == "georgelouisjose@gmail.com" 
+            && !$my_user->email == "georgelouisjose16@gmail.com"){
+                $this->sendOtp($number, $msg, $otp);
+            }
         }
         // If OTP retry is 3 and last retry was less than 5 minutes ago, do not allow to resend OTP
         else 
