@@ -11,12 +11,12 @@
     <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
 
     <script>
-        $(document).ready(function() {
-            toastr.options.preventDuplicates = true;
-            toastr.options.timeOut = 0;
-            toastr.options.extendedTimeOut = 0;
-            toastr.options.closeButton = true;
-        });
+        toastr.options = {
+            preventDuplicates: true,
+            timeOut: 0,
+            extendedTimeOut: 0,
+            closeButton: true
+        };
     </script>
 
     <!-- General Scripts -->
@@ -35,21 +35,25 @@
         toastr.success("{{ session('success_msg') }}");
     </script>
     @endif
-    @if(session()->has('download_file'))
-    <script>
-        $("#download_filename").val("{{ session('download_file') }}");
-        $("#downloadForm").submit();
-    </script>
-    @endif
-    <script>
-        function fetchNotifications() {
-            $('#notifications').load('/notifications');
-        }
 
-        fetchNotifications();
+    @auth
+        @if(session()->has('download_file'))
+        <script>
+            $("#download_filename").val("{{ session('download_file') }}");
+            $("#downloadForm").submit();
+        </script>
+        @endif
+        <script>
+            function fetchNotifications() {
+                $('#notifications').load('/notifications');
+            }
 
-        setInterval(fetchNotifications, 10000);
-    </script>
+            fetchNotifications();
+
+            setInterval(fetchNotifications, 10000);
+        </script>
+    @endauth
+
 
     @if(isset($my_user))
         <script>
@@ -750,6 +754,25 @@
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
+            });
+
+            // Extra - Not Steps
+            $('#showLogin').on('click', function() {
+
+                $('#loginModalBody').removeClass('d-none');
+                $('#otpModal').removeClass('d-none');
+                $('#forgotPasswordBody').removeClass('d-none');
+
+                $('#otpModal').addClass('d-none');
+                $('#forgotPasswordBody').addClass('d-none');
+            });
+
+            $('#showForgotPassword').on('click', function() {
+
+                $('#loginModalBody').addClass('d-none');
+                $('#otpModal').addClass('d-none');
+                $('#forgotPasswordBody').removeClass('d-none');
+;
             });
 
             // Step 1: Click Login → Call OTP_Get + show modal

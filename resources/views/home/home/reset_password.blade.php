@@ -5,7 +5,7 @@
 </head>
 <body>
     @include('plus.navbar')
-    <section id="title">
+    <section id="title" style="margin-top: 100px;">
         <div class="container text-center py-5 fade-in-up">
             <span class="badge text-white mb-2" style="background-color: #950101; font-size:large;">Reset Password</span>
             <p class="mt-3">
@@ -13,7 +13,7 @@
             </p>
         </div>
     </section>
-    <div class="container py-2 fade-in-up">
+    <div class="container py-2 fade-in-up mb-4">
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <div class="rounded-4 border border-1 p-5">

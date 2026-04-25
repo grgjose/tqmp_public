@@ -26,7 +26,7 @@ class CheckNotification
             return redirect('/home')->with('error_msg', 'Login First');
         }
 
-        $path = '/home'.$request->path();
+        $path = '/'.$request->path();
 
         // Check if the user has notifications
         $notifications = DB::table('notifications')->where('user_id', $my_user->id)

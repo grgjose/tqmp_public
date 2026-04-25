@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('contact_num')->nullable();
             $table->string('instructions')->nullable();
             $table->double('delivery_fee')->nullable();
+            $table->boolean('isDefault')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

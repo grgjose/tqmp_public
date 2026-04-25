@@ -3,26 +3,80 @@
         <div class="container-fluid py-3 bg-white">
             <div class="row">
                 <div class="mx-auto">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3 class="mb-0">Messages</h3>
-                        <div>
-                            <div class="btn-group" role="group">
-                                <button class="btn btn-sm btn-outline-primary" onclick="downloadProof({{$quotation->id}})">Download Proof of Paymemt</button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="downloadConforme({{$quotation->id}})">Download Signed Conforme</button>
-                                <button class="btn btn-sm btn-outline-primary" onclick="uploadConforme({{$quotation->id}})" data-bs-toggle="modal" data-bs-target="#uploadConformeModal">Upload Quotation</button>
-                                {{-- <button class="btn btn-sm btn-outline-primary" onclick="downloadAr({{$quotation->id}})">Download Signed Acknowledgement</button> --}}
-                                <button class="btn btn-sm btn-outline-primary" onclick="uploadAr({{$quotation->id}})" data-bs-toggle="modal" data-bs-target="#uploadArModal">Upload Acknowledgement Receipt</button>
-                            </div>
-                            <div class="btn-group" role="group" aria-label="Basic example">
-                                @if($quotation->isApprovedSales == false)
-                                    <button class="btn btn-sm btn-outline-primary" onclick="showInputBox('Approved', {{$quotation->id}})">Approve</button>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="showInputBox('Rejected', {{$quotation->id}})">Reject</button>
-                                @endif
-                                {{-- <button class="btn btn-sm btn-primary" onclick="saveInput()">Save</button> --}}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mt-3 mb-4">
+                    {{-- ─────────────────────────────────────────────────────────── --}}
+                    {{-- TOOLBAR (replaces the old app-content-header + first d-flex) --}}
+                    {{-- ─────────────────────────────────────────────────────────── --}}
+                    <div class="qv-toolbar">
+                    
+                        {{-- Left: title + reference badge --}}
+                        <h3 class="qv-title">
+                            <i class="fa-solid fa-file-invoice" style="color:#4f60c8; font-size:.95rem;"></i>
+                            Quotation Details
+                            <span class="badge-ref">{{ $quotation->reference }}</span>
+                        </h3>
+                    
+                        {{-- Right: all action buttons --}}
+                        <div class="qv-btn-group">
+                    
+                            {{-- ── Go Back ──────────────────────────────────────── --}}
+                            <button type="button"
+                                    class="qv-btn qv-btn-back"
+                                    onclick="quotationHide()">
+                                <i class="fa-solid fa-arrow-left"></i> Go Back
+                            </button>
+                    
+                            <div class="qv-divider"></div>
+                    
+                            {{-- ── File actions: Download / Upload ─────────────── --}}
+                            <button type="button"
+                                    class="qv-btn qv-btn-outline"
+                                    onclick="downloadProof({{ $quotation->id }})">
+                                <i class="fa-solid fa-receipt"></i> Proof of Payment
+                            </button>
+                    
+                            <button type="button"
+                                    class="qv-btn qv-btn-outline"
+                                    onclick="downloadConforme({{ $quotation->id }})">
+                                <i class="fa-solid fa-file-arrow-down"></i> Signed Conforme
+                            </button>
+                    
+                            <button type="button"
+                                    class="qv-btn qv-btn-outline"
+                                    onclick="uploadConforme({{ $quotation->id }})"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#uploadConformeModal">
+                                <i class="fa-solid fa-file-arrow-up"></i> Upload Quotation
+                            </button>
+                    
+                            <button type="button"
+                                    class="qv-btn qv-btn-outline"
+                                    onclick="uploadAr({{ $quotation->id }})"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#uploadArModal">
+                                <i class="fa-solid fa-file-circle-plus"></i> Upload AR
+                            </button>
+                    
+                            {{-- ── Approval actions (only shown when not yet approved) ── --}}
+                            @if($quotation->isApprovedSales == false)
+                                <div class="qv-divider"></div>
+                    
+                                <button type="button"
+                                        class="qv-btn qv-btn-approve"
+                                        onclick="showInputBox('Approved', {{ $quotation->id }})">
+                                    <i class="fa-solid fa-circle-check"></i> Approve
+                                </button>
+                    
+                                <button type="button"
+                                        class="qv-btn qv-btn-reject"
+                                        onclick="showInputBox('Rejected', {{ $quotation->id }})">
+                                    <i class="fa-solid fa-circle-xmark"></i> Reject
+                                </button>
+                            @endif
+                    
+                        </div>{{-- /.qv-btn-group --}}
+                    
+                    </div>{{-- /.qv-toolbar --}}
+                    <div class="row mt-2 mb-2">
                         <div class="border col-md-4">
                             <div class="row">
                                 <div class="col-md-9" data-bs-spy="scroll" data-bs-target="#quotationScrollspy" data-bs-offset="100" style="height: 650px; width:auto; overflow-y: auto;">
@@ -90,19 +144,19 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label fw-bold">Valid Until</label>
+                                                <label class="form-label">Valid Until</label>
                                                 @if($quotation->valid_until == null)
-                                                <input class="form-control-sm form-control" type="datetime-local" placeholder="TBD">
+                                                <input class="form-control-sm form-control" id="valid_until" type="date" placeholder="TBD">
                                                 @else
-                                                <input class="form-control-sm form-control" type="text" placeholder="{{ $quotation->valid_until }}">
+                                                <input class="form-control-sm form-control" id="valid_until" type="date" placeholder="{{ $quotation->valid_until }}">
                                                 @endif
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label fw-bold" style="color: red;">Final Price (PHP)</label>
+                                                <label class="form-label" style="color: red;">Final Price</label>
                                                 @if($quotation->final_price == 0)
-                                                <input class="form-control-sm form-control" type="number" placeholder="TBD">
+                                                <input class="form-control-sm form-control" id="final_price" type="number" placeholder="TBD">
                                                 @else
-                                                <input class="form-control-sm form-control" type="text" placeholder="{{ $quotation->final_price }}">
+                                                <input class="form-control-sm form-control" id="final_price" type="number" placeholder="{{ $quotation->final_price }}">
                                                 @endif
                                             </div>
                                         </div>
@@ -340,7 +394,7 @@
                             <div id="note-1" class="border-start border-primary border-4 mb-3 bg-white p-3">
                                 <div class="d-flex justify-content-between align-items-center bg-primary bg-opacity-10 p-2 mb-2 border-bottom">
                                     <div class="d-flex align-items-center">
-                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">{{ strtoupper(substr($message->fname, 0, 1).' '.substr($message->lname, 0, 1)) }}</div>
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">{{ strtoupper(substr($message->fname, 0, 1).substr($message->lname, 0, 1)) }}</div>
                                         <div class="ms-2">
                                             <strong>{{ $message->fname.' '.$message->lname }}</strong>
                                             <div class="text-muted small">{{ $message->created_at }}</div>

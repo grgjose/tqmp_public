@@ -35,6 +35,7 @@ return new class extends Migration
             $table->string('status')->nullable()->default('registered');
             $table->string('remarks')->nullable();
             $table->string('approval_reason')->nullable();
+            $table->string('rejection_reason')->nullable();
             $table->boolean('isDiscounted')->nullable()->default(false);
             $table->boolean('isSpecialDiscounted')->nullable()->default(false);
             $table->string('otp')->nullable()->default('');

@@ -78,7 +78,7 @@ Route::get('/unsuccessful', [HomeController::class, 'unsuccessful']);
 | All User Protected Routes (AllUserAuth) — All Roles (usertype=3 || 2 || 1)
 |--------------------------------------------------------------------------
 */
-Route::middleware([AllUserAuth::class])->group(function () {
+Route::middleware([AllUserAuth::class, CheckNotification::class])->group(function () {
 
     // API Calls
     Route::post('/lalamoveGetQuotation', [OrderController::class, 'lalamoveGetQuotation'])->name('lalamove.getQuotation');
@@ -118,7 +118,7 @@ Route::middleware([AllUserAuth::class])->group(function () {
 | User Protected Routes (UserAuth) — Customers Only (usertype=3)
 |--------------------------------------------------------------------------
 */
-Route::middleware([UserAuth::class])->group(function () {
+Route::middleware([UserAuth::class, CheckNotification::class])->group(function () {
     // Profile & Account
     Route::get('/profile', [HomeController::class, 'profile']);
     Route::post('/confirm-password', [UserController::class, 'confirmPassword'])->name('confirm.password');
@@ -186,7 +186,7 @@ Route::middleware([UserAuth::class])->group(function () {
 | Sales Protected Routes (SalesAuth) — Admin (usertype=1) & Sales (usertype=2)
 |--------------------------------------------------------------------------
 */
-Route::middleware([SalesAuth::class])->group(function () {
+Route::middleware([SalesAuth::class, CheckNotification::class])->group(function () {
     // Dashboard & Orders
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/ticketing', [OrderController::class, 'ticketing']);
@@ -246,7 +246,7 @@ Route::middleware([SalesAuth::class])->group(function () {
 | Admin Protected Routes (AdminAuth) — Admin Only (usertype=1)
 |--------------------------------------------------------------------------
 */
-Route::middleware([AdminAuth::class])->group(function () {
+Route::middleware([AdminAuth::class, CheckNotification::class])->group(function () {
     // Users
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/users-view/{id}', [UserController::class, 'show']);

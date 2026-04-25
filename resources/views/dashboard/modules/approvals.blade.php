@@ -113,7 +113,7 @@
                         <div class="row">
                             <div class="form-group col-12">
                                 <label for="reason">Reason</label>
-                                <textarea cols="10" rows="5" class="form-control" style="resize: none;" id="reason" name="reason"></textarea>
+                                <textarea cols="10" rows="5" class="form-control" style="resize: none;" id="reason" name="reason" required></textarea>
                             </div>
                         </div>
                     </div>

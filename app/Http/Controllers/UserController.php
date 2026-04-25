@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Http;
 use DateTime;
 
-
 class UserController extends Controller
 {
     /**
@@ -180,7 +179,14 @@ class UserController extends Controller
 
         // Check account status before even sending OTP
         if ($my_user->usertype == 3) {
-            if ($my_user->status === 'registered') {
+            if (strtolower($my_user->status) === 'registered') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your account is not yet verified.'
+                ], 403);
+            }
+
+            if (strtolower($my_user->status) === 'rejected') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Your account is not yet verified.'
@@ -392,9 +398,9 @@ class UserController extends Controller
             'fname' => ['required', 'min:3'],
             'mname' => ['nullable'],
             'lname' => ['required'],
-            'email' => ['required', 'email', 'unique:users,email'],
+            'email' => ['required', 'email'],
             'birthdate' => ['required'],
-            'contact_num' => ['required', 'regex:/^(09|\+639)\d{9}$/', 'unique:users,contact_num'],
+            'contact_num' => ['required', 'regex:/^(09|\+639)\d{9}$/'],
             'password' => ['required'],
             'upload_file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
         ]);
@@ -408,7 +414,19 @@ class UserController extends Controller
             return response()->json(['error' => 'File upload failed'], 400);
         }
 
-        $user = new User();
+        // Check if email already exists
+        $existingUser = User::where('email', $validated['email'])->first();
+        if ($existingUser && $existingUser->usertype == 3 && strtolower(trim($existingUser->status)) === 'rejected') {
+            $user = $existingUser;
+        } elseif ($existingUser == null) {
+            $user = new User();
+        } else {
+            $checkNumber = User::where('contact_num', $validated['contact_num'])->first();
+            if ($checkNumber) {
+                return redirect('/home')->with('error_msg', 'Contact number already in use!');
+            }
+            return redirect('/home')->with('error_msg', 'Email already in use!');
+        }
 
         $user->fname = $validated['fname'];
         $user->mname = $validated['mname'];
@@ -420,6 +438,7 @@ class UserController extends Controller
         $user->email_verification_token = $this->generateGUID();
         $user->email_verification_sent = date("Y-m-d H:i:s");
         $user->password = Hash::make($validated['password']);
+        $user->status = "registered";
         $user->upload_file = $filename;
 
         $user->save();
@@ -767,6 +786,11 @@ class UserController extends Controller
         if($my_user == null) return redirect('/home')->with('error_msg', 'Invalid Access!');
         if($my_user->usertype > 2) return redirect('/home')->with('error_msg', 'Invalid Access!');
 
+        $validated = $request->validate([
+            'reason' => ['required'],
+        ]);
+
+
         $users = DB::table('users')
         ->where('usertype', '=', 3)
         ->where('status', 'registered')
@@ -776,16 +800,16 @@ class UserController extends Controller
         if(count($users) == 0) return redirect('/dashboard')->with('error_msg', 'Unexpected Error!');
 
         $user = User::find($id);
-        $user->status = "rejected";
+        $user->status = "Rejected";
         $user->save();
 
         // Send Rejection Email
         $data = [
             'name' => $user->fname.' '.$user->lname,
-            'message' => 'We regret to inform you that your account registration has been rejected. For more information, please contact our support team.',
-            'email_token' => $user->email_verification_token
+            'message' => 'We regret to inform you that your account registration has been rejected. For more information, please contact our support team.'
+            . "\n\nReason for Rejection: " . $validated['reason'],
         ];
-    
+
         Mail::to($user->email)->send(new RegistrationRejectionMail($data));
 
         return redirect('/approvals')->with('success_msg', $user->email.' is now a Rejected Customer!');
@@ -963,7 +987,7 @@ class UserController extends Controller
 
         $settings_nav = DB::table('settings')->where('key', 'like', 'NAVBAR_%')->pluck('value', 'key');
 
-        return view('home.reset_password', [
+        return view('home.home.reset_password', [
             'user' => $user,
             'my_user' => $my_user,
             'settings_nav' => $settings_nav,

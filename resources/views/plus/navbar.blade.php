@@ -277,9 +277,32 @@
                 <p class="text-center text-muted mb-4">Access your account</p>
                 <form id="loginForm" action="/login" method="post">@csrf
                     <input id="loginEmail" type="email" name="email" class="form-control mb-3" placeholder="Email" required>
-                    <input id="loginPassword" type="password" name="password" class="form-control mb-3" placeholder="Password"
-                        required>
+                    <input id="loginPassword" type="password" name="password" class="form-control mb-3" placeholder="Password" required>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" />
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        <a href="#" class="text-decoration-none text-danger" id="showForgotPassword">Forgot password?</a>
+                    </div>
                     <input id="loginSubmitBtn" type="submit" class="btn btn-danger w-100" value="Login">
+                </form>
+            </div>
+        </div>
+
+        <div class="modal-content d-none" id="forgotPasswordBody">
+            <div class="modal-body text-center p-4">
+                <h2 class="text-center fw-bold text-danger pt-3">Forgot Password</h2>
+                <p class="text-center text-muted mb-4">Access your account</p>
+                <form action="/forgot-password" method="post">@csrf
+                    <div class="form-outline mb-4">
+                        <input type="email" name="email" class="form-control" placeholder="Email address" required />
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div></div>
+                        <a href="#" class="text-decoration-none text-danger" id="showLogin">Continue to Login</a>
+                    </div>
+                    <input type="submit" class="btn btn-danger w-100" value="Send Email">
                 </form>
             </div>
         </div>

@@ -18,6 +18,7 @@
                             <th>Next Action</th>
                             <th>Total Pricing</th>
                             <th>Valid Until</th>
+                            <th>Remarks</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -53,14 +54,16 @@
                                     <ul class="dropdown-menu" aria-labelledby="downloadUploadDropdown">
                                         <li><a class="dropdown-item" href="#" onclick="downloadConforme({{$quote->id}}, 'somehwere')">Download Quotation</a></li>
                                         <li><a class="dropdown-item" href="#" onclick="uploadConforme({{$quote->id}})" data-bs-toggle="modal" data-bs-target="#uploadConformeModal">Upload Signed Conforme</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="uploadProof({{$quote->id}})" data-bs-toggle="modal" data-bs-target="#uploadProofModal">Upload Proof of Payment</a></li>
-                                        <li><a class="dropdown-item" href="#" onclick="downloadAr({{$quote->id}}, 'somehwere')">Download Acknowledgement Receipt</a></li>
+                                        {{-- <li><a class="dropdown-item" href="#" onclick="uploadProof({{$quote->id}})" data-bs-toggle="modal" data-bs-target="#uploadProofModal">Upload Proof of Payment</a></li>
+                                        <li><a class="dropdown-item" href="#" onclick="downloadAr({{$quote->id}}, 'somehwere')">Download Acknowledgement Receipt</a></li> --}}
+                                        <li><a class="dropdown-item" href="#" onclick="uploadConforme({{$quote->id}})" data-bs-toggle="modal" data-bs-target="#uploadConformeModal">Add to Cart</a></li>
                                     </ul>
                                 </div>
                                 @endif
                             </td>
                             <td>{{ $quote->final_price }}</td>
                             <td>{{ $quote->valid_until }}</td>
+                            <td>{{ $quote->remarks }}</td>
                         </tr>
                         @endforeach
                         @endif
