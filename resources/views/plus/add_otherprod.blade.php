@@ -1,13 +1,8 @@
 <div class="py-5">
   <div class="row">
-    {{-- <div class="mb-3">
-      <input
-          type="text"
-          id="productSearch3"
-          class="form-control form-control-lg"
-          placeholder="Search other products..."
-      >
-    </div> --}}
+    <div class="mb-3">
+      <input type="text" id="productSearch3" class="form-control form-control-lg" placeholder="Search Other Products...">
+    </div>
     <div class="col-12 col-md-3 mb-3 mb-md-0 pe-md-0">
       <div class="nav flex-row flex-md-column nav-pills me-md-3 border-end border-md-2"
            id="subcategory5-tabs"
@@ -45,7 +40,7 @@
                   @foreach($products as $product)
                     @if($product->sub_category_id == $sub_category->id)
                       <div class="col-6 col-md-4 col-lg-3 d-flex align-items-stretch product-item"
-                          data-name="{{ strtolower($product->name) }}"
+                          data-name="{{ strtolower($product->display_name) }}"
                           data-category="{{ strtolower($sub_category->category) }}">
                         <div class="card border-1 d-flex flex-column w-100">
                           <img src="{{ asset('storage/all-items/'.$product->image) }}"

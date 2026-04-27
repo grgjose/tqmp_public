@@ -368,6 +368,7 @@
 
         document.addEventListener('keydown', function(e) {
             const modal = document.getElementById('imageModal');
+            if (!modal) return; // ← ADD THIS LINE
             if (modal.classList.contains('show')) {
                 if (e.key === 'ArrowLeft') {
                     navigateImage(-1);
@@ -407,6 +408,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('imageModal');
             let panzoomInstance = null;
+
+             if (!modal) return; // ← ADD THIS LINE
             modal.addEventListener('shown.bs.modal', function() {
                 const zoomContainer = document.getElementById('zoomContainer');
                 if (panzoomInstance) {
@@ -667,57 +670,7 @@
         }
     </script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const searchInput = document.getElementById('productSearch1');
 
-            if (!searchInput) return; // ← Guard: element doesn't exist on this page
-
-            searchInput.addEventListener('keyup', function () {
-                const query = this.value.toLowerCase().trim();
-
-                // Loop through all tab panes
-                document.querySelectorAll('.tab-pane').forEach(tabPane => {
-                    let hasVisibleProduct = false;
-
-                    // Loop through products inside this tab
-                    tabPane.querySelectorAll('.product-item').forEach(product => {
-                        const name = product.dataset.name?.toLowerCase() || '';
-
-                        if (query === '' || name.includes(query)) {
-                            product.style.display = '';
-                            hasVisibleProduct = true;
-                        } else {
-                            product.style.display = 'none';
-                        }
-                    });
-
-                    // Hide tab pane if no products match
-                    tabPane.style.display = hasVisibleProduct ? '' : 'none';
-                });
-
-                // Handle tab buttons visibility
-                document.querySelectorAll('#subcategory3-tabs .nav-link').forEach(tabBtn => {
-                    const targetId = tabBtn.getAttribute('data-bs-target');
-                    const targetPane = document.querySelector(targetId);
-
-                    tabBtn.style.display =
-                        targetPane && targetPane.style.display === 'none'
-                            ? 'none'
-                            : '';
-                });
-
-                // Activate first visible tab automatically
-                const firstVisibleTab = document.querySelector(
-                    '#subcategory3-tabs .nav-link:not([style*="display: none"])'
-                );
-
-                if (firstVisibleTab && !firstVisibleTab.classList.contains('active')) {
-                    new bootstrap.Tab(firstVisibleTab).show();
-                }
-            });
-        });
-    </script>
 
     <script>
         $(document).ready(function () {
@@ -1010,40 +963,225 @@
         });
     </script>
 
+    {{-- <style>
+        .product-item-hidden { display: none !important; }
+    </style>
+
     <script>
-        window.addEventListener('load', function () {
-            var input = document.getElementById('allProductsSearch');
-            var grid  = document.getElementById('allProductsGrid');
-            var empty = document.getElementById('allProductsEmpty');
+        $(document).on('input', '#productSearch1', function () {
+            var query = $(this).val().trim().toLowerCase();
 
-            if (!input || !grid) return;
-
-            input.addEventListener('input', function () {
-                var query   = input.value.toLowerCase().trim();
-                var items   = grid.getElementsByClassName('all-product-item');
+            $('#subcategory3-content .tab-pane').each(function () {
+                var $pane   = $(this);
+                var $items  = $pane.find('.product-item');
                 var visible = 0;
 
-                for (var i = 0; i < items.length; i++) {
-                    var el = items[i];
-                    var haystack = (
-                        (el.getAttribute('data-name')        || '') + ' ' +
-                        (el.getAttribute('data-category')    || '') + ' ' +
-                        (el.getAttribute('data-subcategory') || '') + ' ' +
-                        (el.getAttribute('data-sku')         || '') + ' ' +
-                        (el.getAttribute('data-description') || '')
-                    ).toLowerCase();
+                $items.each(function () {
+                    var name     = $(this).data('name')     || '';
+                    var category = $(this).data('category') || '';
+                    var matches  = (query === '') || name.includes(query) || category.includes(query);
 
-                    if (!query || haystack.indexOf(query) !== -1) {
-                        el.style.display = '';
+                    if (matches) {
+                        $(this).removeClass('product-item-hidden');
                         visible++;
                     } else {
-                        el.style.display = 'none';
+                        $(this).addClass('product-item-hidden');
                     }
+                });
+
+                var $msg = $pane.find('.alummfg-empty-msg');
+                if ($msg.length === 0) {
+                    $msg = $(
+                        '<div class="alummfg-empty-msg text-center text-muted py-5 w-100">' +
+                            '<i class="fas fa-search fa-2x mb-3 d-block"></i>' +
+                            '<p>No aluminum products found matching your search.</p>' +
+                        '</div>'
+                    );
+                    $pane.find('.row').first().append($msg);
                 }
 
-                if (empty) {
-                    empty.style.display = visible === 0 ? 'block' : 'none';
-                }
+                $msg.toggle(query !== '' && visible === 0);
             });
+        });
+    </script> --}}
+
+    <style>
+        .product-item-hidden { display: none !important; }
+    </style>
+
+    <script>
+        $(document).on('input', '#productSearch1', function () {
+            var query = $(this).val().trim().toLowerCase();
+            var totalVisible = 0;
+
+            $('#subcategory3-content .tab-pane').each(function () {
+                var $pane    = $(this);
+                var paneId   = $pane.attr('id');
+                var $items   = $pane.find('.product-item');
+                var visible  = 0;
+
+                $items.each(function () {
+                    var name     = $(this).data('name')     || '';
+                    var category = $(this).data('category') || '';
+                    var matches  = (query === '') || name.includes(query) || category.includes(query);
+
+                    if (matches) {
+                        $(this).removeClass('product-item-hidden');
+                        visible++;
+                    } else {
+                        $(this).addClass('product-item-hidden');
+                    }
+                });
+
+                totalVisible += visible;
+
+                // Hide/show the corresponding side tab button
+                var $tabBtn = $('#subcategory3-tabs button[data-bs-target="#' + paneId + '"]');
+                if (query === '' || visible > 0) {
+                    $tabBtn.removeClass('product-item-hidden');
+                } else {
+                    $tabBtn.addClass('product-item-hidden');
+                }
+
+                // If this pane had results and its tab is now hidden (was active before),
+                // auto-switch to first visible tab
+                var $msg = $pane.find('.alummfg-empty-msg');
+                if ($msg.length === 0) {
+                    $msg = $(
+                        '<div class="alummfg-empty-msg text-center text-muted py-5 w-100">' +
+                            '<i class="fas fa-search fa-2x mb-3 d-block"></i>' +
+                            '<p>No aluminum products found matching your search.</p>' +
+                        '</div>'
+                    );
+                    $pane.find('.row').first().append($msg);
+                }
+
+                $msg.toggle(query !== '' && visible === 0);
+            });
+
+            // Auto-switch to first visible tab if current active tab is now hidden
+            var $activeTab = $('#subcategory3-tabs button.active');
+            if ($activeTab.hasClass('product-item-hidden')) {
+                var $firstVisible = $('#subcategory3-tabs button:not(.product-item-hidden)').first();
+                if ($firstVisible.length) {
+                    bootstrap.Tab.getOrCreateInstance($firstVisible[0]).show();
+                }
+            }
+        });
+    </script>
+
+    <script>
+        // Glass MFG Product Search
+        $(document).on('input', '#productSearch2', function () {
+            var query        = $(this).val().trim().toLowerCase();
+            var totalVisible = 0;
+
+            $('#subcategory-content .tab-pane').each(function () {
+                var $pane   = $(this);
+                var paneId  = $pane.attr('id');
+                var $items  = $pane.find('.product-item');
+                var visible = 0;
+
+                $items.each(function () {
+                    var name     = $(this).data('name')     || '';
+                    var category = $(this).data('category') || '';
+                    var matches  = (query === '') || name.includes(query) || category.includes(query);
+
+                    if (matches) {
+                        $(this).removeClass('product-item-hidden');
+                        visible++;
+                    } else {
+                        $(this).addClass('product-item-hidden');
+                    }
+                });
+
+                totalVisible += visible;
+
+                var $tabBtn = $('#subcategory-tabs button[data-bs-target="#' + paneId + '"]');
+                if (query === '' || visible > 0) {
+                    $tabBtn.removeClass('product-item-hidden');
+                } else {
+                    $tabBtn.addClass('product-item-hidden');
+                }
+
+                var $msg = $pane.find('.glassmfg-empty-msg');
+                if ($msg.length === 0) {
+                    $msg = $(
+                        '<div class="glassmfg-empty-msg text-center text-muted py-5 w-100">' +
+                            '<i class="fas fa-search fa-2x mb-3 d-block"></i>' +
+                            '<p>No glass products found matching your search.</p>' +
+                        '</div>'
+                    );
+                    $pane.find('.row').first().append($msg);
+                }
+
+                $msg.toggle(query !== '' && visible === 0);
+            });
+
+            var $activeTab = $('#subcategory-tabs button.active');
+            if ($activeTab.hasClass('product-item-hidden')) {
+                var $firstVisible = $('#subcategory-tabs button:not(.product-item-hidden)').first();
+                if ($firstVisible.length) {
+                    bootstrap.Tab.getOrCreateInstance($firstVisible[0]).show();
+                }
+            }
+        });
+    </script>
+
+    <script>
+        // Other Products Search
+        $(document).on('input', '#productSearch3', function () {
+            var query        = $(this).val().trim().toLowerCase();
+            var totalVisible = 0;
+
+            $('#subcategory5-content .tab-pane').each(function () {
+                var $pane   = $(this);
+                var paneId  = $pane.attr('id');
+                var $items  = $pane.find('.product-item');
+                var visible = 0;
+
+                $items.each(function () {
+                    var name     = $(this).data('name')     || '';
+                    var category = $(this).data('category') || '';
+                    var matches  = (query === '') || name.includes(query) || category.includes(query);
+
+                    if (matches) {
+                        $(this).removeClass('product-item-hidden');
+                        visible++;
+                    } else {
+                        $(this).addClass('product-item-hidden');
+                    }
+                });
+
+                totalVisible += visible;
+
+                var $tabBtn = $('#subcategory5-tabs button[data-bs-target="#' + paneId + '"]');
+                if (query === '' || visible > 0) {
+                    $tabBtn.removeClass('product-item-hidden');
+                } else {
+                    $tabBtn.addClass('product-item-hidden');
+                }
+
+                var $msg = $pane.find('.otherprod-empty-msg');
+                if ($msg.length === 0) {
+                    $msg = $(
+                        '<div class="otherprod-empty-msg text-center text-muted py-5 w-100">' +
+                            '<i class="fas fa-search fa-2x mb-3 d-block"></i>' +
+                            '<p>No products found matching your search.</p>' +
+                        '</div>'
+                    );
+                    $pane.find('.row').first().append($msg);
+                }
+
+                $msg.toggle(query !== '' && visible === 0);
+            });
+
+            var $activeTab = $('#subcategory5-tabs button.active');
+            if ($activeTab.hasClass('product-item-hidden')) {
+                var $firstVisible = $('#subcategory5-tabs button:not(.product-item-hidden)').first();
+                if ($firstVisible.length) {
+                    bootstrap.Tab.getOrCreateInstance($firstVisible[0]).show();
+                }
+            }
         });
     </script>
