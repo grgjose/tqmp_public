@@ -1007,3 +1007,41 @@
             }
         });
     </script>
+
+    <script>
+        window.addEventListener('load', function () {
+            var input = document.getElementById('allProductsSearch');
+            var grid  = document.getElementById('allProductsGrid');
+            var empty = document.getElementById('allProductsEmpty');
+
+            if (!input || !grid) return;
+
+            input.addEventListener('input', function () {
+                var query   = input.value.toLowerCase().trim();
+                var items   = grid.getElementsByClassName('all-product-item');
+                var visible = 0;
+
+                for (var i = 0; i < items.length; i++) {
+                    var el = items[i];
+                    var haystack = (
+                        (el.getAttribute('data-name')        || '') + ' ' +
+                        (el.getAttribute('data-category')    || '') + ' ' +
+                        (el.getAttribute('data-subcategory') || '') + ' ' +
+                        (el.getAttribute('data-sku')         || '') + ' ' +
+                        (el.getAttribute('data-description') || '')
+                    ).toLowerCase();
+
+                    if (!query || haystack.indexOf(query) !== -1) {
+                        el.style.display = '';
+                        visible++;
+                    } else {
+                        el.style.display = 'none';
+                    }
+                }
+
+                if (empty) {
+                    empty.style.display = visible === 0 ? 'block' : 'none';
+                }
+            });
+        });
+    </script>

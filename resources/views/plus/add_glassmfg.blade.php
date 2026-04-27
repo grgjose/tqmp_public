@@ -1,13 +1,13 @@
 <div class="py-5">
   <div class="row">
-    <div class="mb-3">
+    {{-- <div class="mb-3">
       <input
           type="text"
           id="productSearch2"
           class="form-control form-control-lg"
           placeholder="Search glass mfg products..."
       >
-    </div>
+    </div> --}}
     <div class="col-12 col-md-3 mb-3 mb-md-0 pe-md-0">
       <div class="nav flex-row flex-md-column nav-pills me-md-3 border-end border-md-2"
            id="subcategory-tabs"

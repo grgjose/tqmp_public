@@ -315,12 +315,15 @@ class HomeController extends Controller
 
         $productSubCategories = DB::table('product_sub_categories')->get();
 
+        $productCategories = DB::table('product_categories')->get(); // ADD THIS LINE
+
         $settings_nav = DB::table('settings')->where('key', 'like', 'NAVBAR_%')->pluck('value', 'key');
 
         return view('home.userPage.shop', [
             'my_user' => $my_user,
             'products' => $products,
             'productSubCategories' => $productSubCategories,
+            'productCategories' => $productCategories, // ADD THIS LINE
             'settings_nav' => $settings_nav,
         ]);
     }
