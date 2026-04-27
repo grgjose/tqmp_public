@@ -671,6 +671,8 @@
         document.addEventListener('DOMContentLoaded', function () {
             const searchInput = document.getElementById('productSearch1');
 
+            if (!searchInput) return; // ← Guard: element doesn't exist on this page
+
             searchInput.addEventListener('keyup', function () {
                 const query = this.value.toLowerCase().trim();
 

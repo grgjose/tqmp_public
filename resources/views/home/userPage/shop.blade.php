@@ -40,15 +40,15 @@
     <section class="container text-center fade-in-up py-3 mt-5">
         <ul class="nav nav-underline justify-content-start d-flex align-items-stretch justify-content-md-center flex-nowrap overflow-x-auto pb-2 px-2" id="servicesNav" style="scrollbar-width: thin;">
             {{-- NEW: All Products tab (default) --}}
-            <li class="nav-item flex-shrink-0">
+            {{-- <li class="nav-item flex-shrink-0">
                 <a class="nav-link active" href="#all-products" data-bs-toggle="tab">
                     <i class="fas fa-th-large me-1 me-md-2"></i>
                     <span class="d-none d-md-inline">All Products</span>
                     <span class="d-inline d-md-none">All</span>
                 </a>
-            </li>
+            </li> --}}
             <li class="nav-item flex-shrink-0">
-                <a class="nav-link" href="#glass-manufacturing" data-bs-toggle="tab">  {{-- removed 'active' --}}
+                <a class="nav-link active" href="#glass-manufacturing" data-bs-toggle="tab">   
                     <i class="fas fa-industry me-1 me-md-2"></i>
                     <span class="d-none d-md-inline">Glass Manufacturing</span>
                     <span class="d-inline d-md-none">Glass</span>
@@ -71,12 +71,12 @@
         </ul>
         <div class="tab-content mt-3" id="servicesTabContent">
 
-            {{-- NEW: All Products pane (default active) --}}
+            {{-- NEW: All Products pane (default active)
             <div class="tab-pane fade fade-in-up show active" id="all-products">
                 @include('plus.add_allproducts')
-            </div>
+            </div> --}}
 
-            <div class="tab-pane fade fade-in-up" id="glass-manufacturing">  {{-- removed 'show active' --}}
+            <div class="tab-pane fade fade-in-up show active" id="glass-manufacturing">
                 @include('plus.add_glassmfg')
             </div>
             <div class="tab-pane fade fade-in-up" id="aluminum-manufacturing">
