@@ -248,8 +248,10 @@ class UserController extends Controller
             $user->otp_retry = 1;
 
             // For Development Only - Don't send OTP for specific emails
-            if(!$my_user->email == "georgelouisjose@gmail.com" 
-            && !$my_user->email == "georgelouisjose16@gmail.com"){
+            if($my_user->email == "georgelouisjose@gmail.com" 
+            || $my_user->email == "georgelouisjose16@gmail.com"){
+                //$this->sendOtp($number, $msg, $otp);
+            } else {
                 $this->sendOtp($number, $msg, $otp);
             }
         } 
@@ -258,9 +260,12 @@ class UserController extends Controller
             $user->otp = $otp;
             $user->otp_retry = $user->otp_retry + 1;
             $user->otp_last_retry = now();
+
             // For Development Only - Don't send OTP for specific emails
-            if(!$my_user->email == "georgelouisjose@gmail.com" 
-            && !$my_user->email == "georgelouisjose16@gmail.com"){
+            if($my_user->email == "georgelouisjose@gmail.com" 
+            || $my_user->email == "georgelouisjose16@gmail.com"){
+                //$this->sendOtp($number, $msg, $otp);
+            } else {
                 $this->sendOtp($number, $msg, $otp);
             }
         }
@@ -272,8 +277,10 @@ class UserController extends Controller
             $user->otp_retry = 1; // Reset retry count to 1 since we're allowing a new OTP to be sent
             
             // For Development Only - Don't send OTP for specific emails
-            if(!$my_user->email == "georgelouisjose@gmail.com" 
-            && !$my_user->email == "georgelouisjose16@gmail.com"){
+            if($my_user->email == "georgelouisjose@gmail.com" 
+            || $my_user->email == "georgelouisjose16@gmail.com"){
+                //$this->sendOtp($number, $msg, $otp);
+            } else {
                 $this->sendOtp($number, $msg, $otp);
             }
         }
