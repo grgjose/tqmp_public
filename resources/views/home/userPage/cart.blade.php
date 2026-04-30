@@ -74,7 +74,7 @@
                                         <tr class="{{ $isExpiredQuotation ? 'table-danger opacity-75' : '' }}">
                                             <td>
                                                 <input type="checkbox" name="checkboxes[]" value="{{ $cart->id }}"
-                                                    class="form-check-input" {{ $isExpiredQuotation ? 'disabled' : 'checked' }}>
+                                                    class="form-check-input" {{ $isExpiredQuotation ? 'disabled' : '' }}>
                                             </td>
                                             <td>
                                                 <div class="d-flex align-items-center">
@@ -269,7 +269,7 @@
                                     <div class="mb-3 mt-3">
                                         <input type="file" name="proof" id="paymentAttachment"
                                             class="form-control form-control-sm attachmentRelated"
-                                            accept="image/*,application/pdf">
+                                            accept="image/*,application/pdf" required>
                                         <small class="text-muted d-block mt-1">Accepted formats: JPG, PNG, PDF</small>
                                     </div>
                                 </label>

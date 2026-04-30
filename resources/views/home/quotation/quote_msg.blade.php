@@ -112,12 +112,13 @@
                                         Options <i class="fa-solid fa-caret-down ms-1"></i>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        @if($quotation->status != 'Cancelled')
+                                        @if($quotation->status != 'Cancelled' && $quotation->status != 'Expired' && $quotation->isAddedToCart == false)
                                         <li><a class="dropdown-item" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#cancelModal">Cancel</a></li>
                                         {{-- <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#approveModal">Approve</a></li> --}}
                                         @endif
 
                                         @if($quotation->status != 'Approved' && $quotation->status != 'Added to Cart' && $quotation->status != 'Expired')
+                                        <li><a class="dropdown-item" style="cursor: pointer;" href="#" onclick="downloadConforme({{$quotation->id}})">Download Quotation Conforme</a></li>
                                         <li><a class="dropdown-item" style="cursor: pointer;" href="#" data-bs-toggle="modal" data-bs-target="#uploadConformeModal">Upload Signed Conforme</a></li>
                                         @endif
 

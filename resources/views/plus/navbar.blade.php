@@ -153,6 +153,16 @@
                                             Quotation Status
                                         </a>
                                     </li>
+                                    @if($my_user->isDiscounted == false || $my_user->isSpecialDiscounted == false)
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center" href="/profile">
+                                            <span class="position-relative">
+                                                <i class="fa-solid fa-arrow-up me-2"></i>
+                                            </span>
+                                            Upgrade Account
+                                        </a>
+                                    </li>
+                                    @endif
                                 @endif
                                 @if ($my_user->usertype == 1 || $my_user->usertype == 2)
                                     <li><a class="dropdown-item" href="/dashboard"><i
@@ -321,22 +331,22 @@
 
                 <!-- OTP Inputs -->
                 <div class="d-flex justify-content-center otp-inputs mb-3">
-                    <input id="otp_digit1" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                    <input id="otp_digit1" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                         oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
                         onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                    <input id="otp_digit2" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                    <input id="otp_digit2" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                         oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
                         onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                    <input id="otp_digit3" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                    <input id="otp_digit3" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                         oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
                         onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                    <input id="otp_digit4" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                    <input id="otp_digit4" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                         oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
                         onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                    <input id="otp_digit5" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                    <input id="otp_digit5" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                         oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
                         onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
-                    <input id="otp_digit6" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*"
+                    <input id="otp_digit6" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
                         oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value) this.nextElementSibling?.focus();"
                         onkeyup="if(event.key==='Backspace') { this.previousElementSibling?.focus(); } checkOtp();">
 

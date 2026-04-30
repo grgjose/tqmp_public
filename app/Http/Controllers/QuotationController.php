@@ -101,7 +101,7 @@ class QuotationController extends Controller
 
             $quotation = new Quotation();
             $quotation->user_id = $my_user->id;
-            $quotation->reference = 'B-' . $this->generateQuotationID($this->getNextAutoIncrement('quotations'));
+            $quotation->reference = 'B-' . $this->generateQuotationID($this->getNextAutoIncrement('quotations', 'B'));
             $quotation->quotation_type = $quotationType;
             $quotation->plate_number = $validated['plateNumber'];
             $quotation->model = $validated['model'] == 'Other Model'?$validated['other_model']:$validated['model'];
@@ -149,7 +149,7 @@ class QuotationController extends Controller
 
             $quotation = new Quotation();
             $quotation->user_id = $my_user->id;
-            $quotation->reference = 'Q-' . $this->generateQuotationID($this->getNextAutoIncrement('quotations'));
+            $quotation->reference = 'Q-' . $this->generateQuotationID($this->getNextAutoIncrement('quotations', 'Q'));
             $quotation->quotation_type = $quotationType;
             $quotation->type = json_encode($validated['type']);
             $quotation->thickness = json_encode($validated['thickness']);
@@ -511,7 +511,7 @@ class QuotationController extends Controller
         $quotation->status = 'Cancelled';
         $quotation->save();
 
-        return redirect('/profile')->with('success_msg', $quotation->reference . ' Quotation Cancelled.');
+        return redirect('/quotes-status')->with('success_msg', $quotation->reference . ' Quotation Cancelled.');
     }
 
     /**
@@ -706,16 +706,30 @@ class QuotationController extends Controller
     /**
      * Gets Next Auto Increment
      */
-    public function getNextAutoIncrement($table)
+    public function getNextAutoIncrement($table, $prefix = '')
     {
-        // Check if table exists
         if (!DB::getSchemaBuilder()->hasTable($table)) {
             return 0;
         }
-    
-        // Run the SHOW TABLE STATUS query
+
+        if ($prefix) {
+            $lastRecord = DB::table($table)
+                ->where('reference', 'like', "{$prefix}-%")
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastRecord) {
+                // Reference format: Q-000001-3 or B-000001-3
+                // Split by '-' → ['Q', '000001', '3'], take index [1]
+                $parts = explode('-', $lastRecord->reference);
+                $lastId = isset($parts[1]) ? (int) $parts[1] : 0;
+                return $lastId + 1;
+            }
+
+            return 1; // No records yet with this prefix
+        }
+
         $result = DB::select("SHOW TABLE STATUS LIKE '{$table}'");
-    
         return $result[0]->Auto_increment ?? 0;
     }
 

@@ -48,7 +48,8 @@
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
-                            <th>Item</th>
+                            <th>Order ID</th>
+                            <th>Details</th>
                             <th>Qty</th>
                             <th>Price</th>
                             <th>Status</th>
@@ -68,6 +69,7 @@
                                     —
                                 @endif
                             </td>
+                            <td>-</td>
                             <td>{{ $order->quantity }}</td>
                             <td>₱{{ number_format($order->price, 2) }}</td>
                             <td>

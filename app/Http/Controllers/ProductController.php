@@ -576,7 +576,7 @@ class ProductController extends Controller
             $order->price = $request->input('price_'.$cartId);
             $order->quantity = $request->input('quantity_'.$cartId);
             $order->proof_of_payment = $filename;
-            $order->status = "Pending";
+            $order->status = "Verifying Payment";
             $order->delivery_type = $validated['delivery'];
             
             $order->save();

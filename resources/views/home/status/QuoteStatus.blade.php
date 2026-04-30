@@ -62,7 +62,7 @@
                                         Actions
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="downloadUploadDropdown">
-                                        @if($quote->status != 'Cancelled')
+                                        @if($quote->status != 'Cancelled' && $quote->status != 'Expired' && $quote->isAddedToCart == false)
                                         <li><a class="dropdown-item" style="cursor: pointer;" onclick="$('#quotation_id_modal').val({{ $quote->id }});" data-bs-toggle="modal" data-bs-target="#cancelModal">Cancel</a></li>
                                         {{-- <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#approveModal">Approve</a></li> --}}
                                         @endif
@@ -144,7 +144,7 @@
                 <div class="modal-content">
                     <form method="POST" action="/quotation-to-cart">
                         @csrf
-                        <input type="hidden" name="quotation_id_modal" value="" />
+                        <input type="hidden" id="quotation_id_modal" name="quotation_id" value="" />
                         <div class="modal-header">
                             <h5 class="modal-title" style="color: black;" id="addToCartModalLabel">Confirm Add to Cart</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -165,7 +165,7 @@
                 <div class="modal-content">
                     <form method="POST" action="/cancel-quotation">
                         @csrf
-                        <input type="hidden" name="quotation_id_modal" value="" />
+                        <input type="hidden" id="quotation_id_modal" name="quotation_id" value="" />
                         <div class="modal-header">
                             <h5 class="modal-title" style="color: black;" id="cancelModalLabel">Confirm Cancellation</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
