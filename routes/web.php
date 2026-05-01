@@ -204,6 +204,7 @@ Route::middleware([SalesAuth::class, CheckNotification::class])->group(function 
     Route::get('/order-get-order-details/{orderId}', [OrderController::class, 'getOrderDetails']);
     Route::get('/order-get-driver-details/{orderId}/{driverId}', [OrderController::class, 'getDriverDetails']);
     Route::post('/order-cancel-order', [OrderController::class, 'cancelOrder']);
+    Route::post('/order-item-status/{id}', [OrderController::class, 'changeItemStatus']);
 
     Route::get('/download-conforme-sp/{id}', [QuotationController::class, 'downloadConformeSalesRep']);
     Route::get('/download-ar-sp/{id}', [QuotationController::class, 'downloadARSalesRep']);

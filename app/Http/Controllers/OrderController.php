@@ -850,32 +850,85 @@ class OrderController extends Controller
         //
     }
 
-    // Order Status Change Function
+    /**
+     * Change the status of an entire order (order-level).
+     * This is the existing method, updated to reference $order->reference_num
+     * correctly now that price/quantity no longer live on the order row.
+     */
     public function changeStatus(Request $request, $id)
     {
-
         /** @var \Illuminate\Auth\SessionGuard $auth */
         $auth = auth();
         $my_user = $auth->user();
-
+ 
         $request->validate([
-            'status' => 'required|string|max:255'
+            'status' => 'required|string|max:255',
         ]);
-
-        $order = Order::find($id);
-        $order->status = $request->status;
+ 
+        $order = \App\Models\Order::find($id);
+ 
+        if (!$order) {
+            return response()->json(['error' => 'Order not found.'], 404);
+        }
+ 
+        $order->status       = $request->status;
         $order->sales_rep_id = $my_user->id;
         $order->save();
-
-        // Create Notif
-        $notif = new Notification();
+ 
+        // Create in-app notification for the customer
+        $notif          = new \App\Models\Notification();
         $notif->user_id = $order->customer_id;
-        $notif->message = "The Order status of ".$order->reference_num." is changed to ".$order->status;
-        $notif->link = "/order-status/".$order->reference_num;
-        $notif->isRead = false;
+        $notif->message = 'The status of Order ' . $order->reference_num . ' has been updated to: ' . $request->status;
+        $notif->link    = '/order-status/' . $order->reference_num;
+        $notif->isRead  = false;
         $notif->save();
+ 
+        return response()->json([
+            'success' => true,
+            'message' => 'Order status updated.',
+            'status'  => $order->status,
+        ]);
+    }
 
-        return redirect('/order')->with('success_msg', 'Status Changed');
+    /**
+     * Change the status of a single order item (item-level).
+     * Route suggestion: POST /order-item/{id}/status
+     */
+    public function changeItemStatus(Request $request, $id)
+    {
+        /** @var \Illuminate\Auth\SessionGuard $auth */
+        $auth = auth();
+        $my_user = $auth->user();
+ 
+        $request->validate([
+            'status' => 'required|string|max:255',
+        ]);
+ 
+        $item = \App\Models\OrderItem::find($id);
+ 
+        if (!$item) {
+            return response()->json(['error' => 'Order item not found.'], 404);
+        }
+ 
+        $item->status = $request->status;
+        $item->save();
+ 
+        // Optionally notify the customer about the item status change
+        $order = $item->order;
+        if ($order) {
+            $notif          = new \App\Models\Notification();
+            $notif->user_id = $order->customer_id;
+            $notif->message = 'An item in your order ' . $order->reference_num . ' has been updated to: ' . $request->status;
+            $notif->link    = '/order-status/' . $order->reference_num;
+            $notif->isRead  = false;
+            $notif->save();
+        }
+ 
+        return response()->json([
+            'success' => true,
+            'message' => 'Item status updated.',
+            'status'  => $item->status,
+        ]);
     }
 
     public function setShipping()

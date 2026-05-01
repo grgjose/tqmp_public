@@ -364,46 +364,42 @@ class HomeController extends Controller
         return redirect('/contact')->with('success_msg', 'Inquiry Submitted');
     }
 
+    /**
+     * Order Status  of User
+     *
+     * Restructured to support multiple order items per order.
+     * One Order (header) is created per checkout session.
+     * One OrderItem (line) is created per selected cart row.
+     */
     public function OrderStatus()
     {
         /** @var \Illuminate\Auth\SessionGuard $auth */
         $auth = auth();
         $my_user = $auth->user();
-
+ 
         if ($my_user == null || $my_user->usertype < 3) {
             return redirect('/home')->with('error_msg', 'Login First to view status');
         }
-
-        // Fetch quotations and orders for the user
-        $quotations = DB::table('quotations')->where('user_id', '=', $my_user->id)->get();
-
-        $groupedOrders = DB::table('orders')
-            ->select(
-                'reference_num',
-                DB::raw("
-                CASE 
-                    WHEN SUM(CASE WHEN status != 'completed' THEN 1 ELSE 0 END) = 0 
-                    THEN 'completed' 
-                    ELSE 'pending' 
-                END as group_status
-            "),
-                DB::raw('SUM(price) as total_price'),
-                DB::raw('MIN(created_at) as nearest_created_at')
-            )
-            ->groupBy('reference_num')
+ 
+        // Quotations for this user
+        $quotations = DB::table('quotations')
+            ->where('user_id', $my_user->id)
             ->get();
-
-        $orders = DB::table('orders')->leftJoin('products', 'orders.product_id', '=', 'products.id')
-            ->select('orders.*', 'products.display_name AS display_name')
-            ->where('orders.customer_id', $my_user->id)->get();
-
-        $settings_nav = DB::table('settings')->where('key', 'like', 'NAVBAR_%')->pluck('value', 'key');
-
+ 
+        // All orders for this user, with item counts and total
+        $orders = \App\Models\Order::with('items')
+            ->where('customer_id', $my_user->id)
+            ->latest()
+            ->get();
+ 
+        $settings_nav = DB::table('settings')
+            ->where('key', 'like', 'NAVBAR_%')
+            ->pluck('value', 'key');
+ 
         return view('home.status.OrderStatus', [
-            'my_user' => $my_user,
-            'quotations' => $quotations,
-            'groupedOrders' => $groupedOrders,
-            'orders' => $orders,
+            'my_user'      => $my_user,
+            'quotations'   => $quotations,
+            'orders'       => $orders,
             'settings_nav' => $settings_nav,
         ]);
     }

@@ -489,44 +489,46 @@ class ProductController extends Controller
 
     /**
      * Checkout Items of User
+     *
+     * Restructured to support multiple order items per order.
+     * One Order (header) is created per checkout session.
+     * One OrderItem (line) is created per selected cart row.
      */
     public function checkout(Request $request)
     {
-        
         /** @var \Illuminate\Auth\SessionGuard $auth */
         $auth = auth();
         $my_user = $auth->user();
-
+ 
         $validated = $request->validate([
-            'checkboxes.*' => ['required'],
+            'checkboxes.*'  => ['required'],
             'reference_num' => ['required'],
             'paymentMethod' => ['required', 'in:onlinePayment,directTransfer'],
-            'delivery' => ['required', 'in:pickup,delivery'],
-            'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
+            'delivery'      => ['required', 'in:pickup,delivery'],
+            'proof'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:4096'],
         ]);
-
-        // ── GATE 1: Coupon code must not be entered ──────────────────────────────
+ 
+        // ── GATE 1: Coupon code must not be entered ──────────────────────────
         if ($request->filled('coupon_code')) {
             return redirect('/cart')->with('error_msg', 'Coupon is Expired or Not Available.');
         }
-
-        // ── GATE 2: Delivery requires a default shipping address ─────────────────
+ 
+        // ── GATE 2: Delivery requires a default shipping address ─────────────
         if ($validated['delivery'] === 'delivery') {
             $hasShipping = \App\Models\Shipping::where('user_id', $my_user->id)
-                                            ->where('isDefault', true)
-                                            ->exists();
+                                               ->where('isDefault', true)
+                                               ->exists();
             if (!$hasShipping) {
                 return redirect('/cart')->with('error_msg', 'Please set a default shipping address before selecting Delivery.');
             }
         }
-
-        // ── GATE 3: Check for expired quotation items in the selected cart rows ──
+ 
+        // ── GATE 3: Check for expired quotation items in selected cart rows ──
         foreach ($validated['checkboxes'] as $cartId) {
             $cart = \App\Models\Cart::find($cartId);
             if ($cart && $cart->quotation_id) {
                 $quotation = \App\Models\Quotation::find($cart->quotation_id);
                 if ($quotation && $quotation->valid_until && \Carbon\Carbon::now()->greaterThan($quotation->valid_until)) {
-                    // Mark expired + delete cart row
                     \App\Models\Quotation::withoutEvents(function () use ($quotation) {
                         $quotation->status = 'Expired';
                         $quotation->save();
@@ -536,93 +538,112 @@ class ProductController extends Controller
                 }
             }
         }
-
+ 
+        // ── GATE 4: Pre-validate stock for all product items before writing ──
+        // Check all items first so we never partially commit an order.
+        foreach ($validated['checkboxes'] as $cartId) {
+            $cart = Cart::find($cartId);
+            if ($cart && $cart->product_id) {
+                $requestedQty = intval($request->input('quantity_' . $cartId));
+                $inventory = DB::table('inventories')->where('product_id', $cart->product_id)->first();
+                if (!$inventory) {
+                    return redirect('/cart')->with('error_msg', 'Inventory not found for product: ' . $cart->product_id);
+                }
+                if (($inventory->stock - $requestedQty) < 0) {
+                    return redirect('/cart')->with('error_msg', 'Insufficient stock for product: ' . $cart->product_id);
+                }
+            }
+        }
+ 
+        // ── Handle proof of payment file upload (once for the whole order) ───
         $filename = null;
-        
-        // Handle file upload
         if ($request->hasFile('proof')) {
-            $file = $request->file('proof');
+            $file     = $request->file('proof');
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->storeAs('proof', $filename, 'public');
         }
-
-        foreach($validated['checkboxes'] as $cartId){
-            $cart = Cart::find($cartId);
-            
-            $order = new Order();
-            $order->order_id = 1;
-            $order->reference_num = 'SQ-'.$validated['reference_num'].'-3';
-            $order->product_id = $cart->product_id;
-
-            if($cart->product_id != null){
-                $inventory = DB::table('inventories')->where('product_id', '=', $cart->product_id)->first();
-
-                // Decrease the stock in inventory
-                if ($inventory) {
-                    $newStock = $inventory->stock - $cart->quantity;
-                    if ($newStock < 0) {
-                        return redirect('/cart')->with('error_msg', 'Insufficient stock for product: ' . $cart->product_id);
-                    }
-                    DB::table('inventories')->where('product_id', '=', $cart->product_id)->update(['stock' => $newStock]);
-                } else {
-                    return redirect('/cart')->with('error_msg', 'Inventory not found for product: ' . $cart->product_id);
-                }
+ 
+        // ── Resolve shipping address ─────────────────────────────────────────
+        $shippingAddress = $my_user->address;
+        if ($validated['delivery'] === 'delivery') {
+            $defaultShipping = \App\Models\Shipping::where('user_id', $my_user->id)
+                                                   ->where('isDefault', true)
+                                                   ->first();
+            if ($defaultShipping) {
+                $shippingAddress = $defaultShipping->fulladdress ?? $defaultShipping->address;
             }
-
-            $order->quotation_id = $cart->quotation_id;
-            $order->customer_id = $cart->user_id;
-            $order->sales_rep_id = 0;
-            $order->shipping_address = $my_user->address;
-            $order->price = $request->input('price_'.$cartId);
-            $order->quantity = $request->input('quantity_'.$cartId);
-            $order->proof_of_payment = $filename;
-            $order->status = "Verifying Payment";
-            $order->delivery_type = $validated['delivery'];
-            
-            $order->save();
+        }
+ 
+        // ── Create ONE Order header for the entire checkout session ──────────
+        $referenceNum = 'SQ-' . $validated['reference_num'];
+ 
+        $order                   = new Order();
+        $order->reference_num    = $referenceNum;
+        $order->customer_id      = $my_user->id;
+        $order->sales_rep_id     = 0;
+        $order->shipping_address = $shippingAddress;
+        $order->delivery_type    = $validated['delivery'];
+        $order->proof_of_payment = $filename;
+        $order->status           = 'Verifying Payment';
+        $order->save();
+ 
+        // ── Create one OrderItem per selected cart row ───────────────────────
+        foreach ($validated['checkboxes'] as $cartId) {
+            $cart = Cart::find($cartId);
+ 
+            if (!$cart) continue;
+ 
+            // Deduct inventory for product items
+            if ($cart->product_id) {
+                $requestedQty = intval($request->input('quantity_' . $cartId));
+                DB::table('inventories')
+                  ->where('product_id', $cart->product_id)
+                  ->decrement('stock', $requestedQty);
+            }
+ 
+            // Create the order line item
+            $item               = new \App\Models\OrderItem();
+            $item->order_id     = $order->id;
+            $item->product_id   = $cart->product_id;
+            $item->quotation_id = $cart->quotation_id;
+            $item->quantity     = intval($request->input('quantity_' . $cartId, $cart->quantity));
+            $item->unit_price   = floatval($cart->price);
+            $item->discounted_price = $cart->discounted_price
+                                        ? floatval($request->input('price_' . $cartId, $cart->discounted_price))
+                                        : null;
+            $item->status       = 'Pending';
+            $item->save();
+ 
+            // Remove from cart
             $cart->delete();
         }
-
-        // Prepare Products
-        $products = DB::table('products')
-            ->join('product_categories', 'products.category_id', '=', 'product_categories.id')
-            ->select('products.*', 'product_categories.category as category')
-            ->where('products.deleted_at', '=', null)->get();
-
-        // Prepare Orders
-        $orders = DB::table('orders')
-            ->leftJoin('products', 'products.id', '=', 'orders.product_id')
-            ->leftJoin('quotations', 'quotations.id', '=', 'orders.quotation_id')
-            ->leftJoin('users as customers', 'customers.id', '=', 'orders.customer_id')
-            ->leftJoin('users as sales_reps', 'sales_reps.id', '=', 'orders.sales_rep_id')
-            ->select(
-                'orders.*',
-                'products.name as product_name',
-                'products.price as product_price',
-                'products.display_name as product_display_name',
-                DB::raw("CONCAT(customers.fname, ' ', customers.mname, ' ', customers.lname) as customer_fullname"),
-                DB::raw("CONCAT(sales_reps.fname, ' ', sales_reps.mname, ' ', sales_reps.lname) as sales_rep_fullname"),
-            )
-            ->where('orders.reference_num', $validated['reference_num'])
-            ->get();
-
-            
-        
-        // Prepare Data for Email        
+ 
+        // ── Save computed total back to the order header ─────────────────────
+        $order->total_amount = $order->computeTotal();
+        $order->save();
+ 
+        // ── Prepare email data ───────────────────────────────────────────────
+        $orderWithItems = \App\Models\Order::with([
+            'items.product',
+            'items.quotation',
+        ])->where('reference_num', $referenceNum)->first();
+ 
         $data = [
-            'orders' => $orders,
-            'user' => $my_user,
-            'products' => $products,
-            'reference_num' => $validated['reference_num'],
-            'date' => date('Y-m-d')
+            'order'         => $orderWithItems,
+            'items'         => $orderWithItems->items,
+            'user'          => $my_user,
+            'reference_num' => $referenceNum,
+            'date'          => date('Y-m-d'),
         ];
-
-        $mailTo = env('CHECKOUT_MAIL_TO');  // See in .env file
-        $mailCc = env('CHECKOUT_MAIL_CC');  // See in .env file
-
+ 
+        $mailTo = env('CHECKOUT_MAIL_TO');
+        $mailCc = env('CHECKOUT_MAIL_CC');
+ 
         Mail::to($mailTo)->cc($mailCc)->send(new OrderPlacedMail($data));
-
-        return redirect('/order-status')->with('success_msg', 'Checkout Successful! Here is your order status.');
+ 
+        // ── Fix P-023: redirect with reference number ────────────────────────
+        return redirect('/order-status/' . $referenceNum)
+               ->with('success_msg', 'Checkout Successful! Here is your order status.');
     }
 
     /**

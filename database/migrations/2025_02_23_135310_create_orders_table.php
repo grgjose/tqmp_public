@@ -13,19 +13,27 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->integer('order_id')->nullable();
-            $table->string('reference_num')->nullable();
-            $table->integer('product_id')->nullable();
-            $table->integer('quotation_id')->nullable();
+ 
+            // ── Order identity ────────────────────────────────────────────────
+            $table->string('reference_num')->unique()->nullable();
+ 
+            // ── Parties ───────────────────────────────────────────────────────
             $table->integer('customer_id')->nullable();
             $table->integer('sales_rep_id')->nullable();
+ 
+            // ── Delivery ──────────────────────────────────────────────────────
             $table->string('shipping_address')->nullable();
-            $table->double('price')->nullable();
-            $table->double('quantity')->nullable();
+            $table->string('delivery_type')->nullable();     // pickup | delivery
+ 
+            // ── Payment ───────────────────────────────────────────────────────
+            $table->string('proof_of_payment')->nullable();  // one file per order
+            $table->double('total_amount')->nullable();      // computed or stored total
+ 
+            // ── Order-level status ────────────────────────────────────────────
             $table->string('status')->nullable();
-            $table->string('delivery_type')->nullable();
-            $table->string('proof_of_payment')->nullable();
+ 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
